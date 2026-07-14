@@ -18,6 +18,16 @@
     --scene:#262421; --cream:#F0EEE6; --line:#C9C3B0; --gold:#C9A227;
     --spring:cubic-bezier(0.22, 1, 0.36, 1);
   }
+  :root[data-theme="dark"]{
+    --bg:#161412; --card:#242120; --ink:#ECEAE2; --muted:#9A948A;
+    --accent:#E08A6B; --accent-dark:#C56F50; --scene:#2A2724; --cream:#242120; --line:#3C3830; --gold:#D9B84A;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#161412; --card:#242120; --ink:#ECEAE2; --muted:#9A948A;
+      --accent:#E08A6B; --accent-dark:#C56F50; --scene:#2A2724; --cream:#242120; --line:#3C3830; --gold:#D9B84A;
+    }
+  }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; touch-action:manipulation;}
   html,body{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}
   input,textarea{-webkit-user-select:text; user-select:text;}
@@ -117,6 +127,8 @@
   .hud{font-family:"Courier New",monospace; font-size:13px; letter-spacing:1px; white-space:nowrap;}
   .hud b{color:var(--accent); display:inline-block;}
   .hud b.bump{animation:bump .3s var(--spring);}
+  #topbar .hud{font-size:14px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:5px 11px; box-shadow:0 1px 4px rgba(61,57,41,.06);}
+  #topbar .hud b{font-size:15px;}
   @keyframes bump{0%{transform:scale(1);}40%{transform:scale(1.45);}100%{transform:scale(1);}}
   #missesHud.hot b{color:var(--bad);}
   #longTag{
@@ -131,7 +143,7 @@
   #scene{display:block; width:100%; height:auto; image-rendering:pixelated;}
 
   /* power-ups */
-  #puRow{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  #puRow{display:flex; justify-content:center; gap:10px; margin-top:12px; flex-wrap:wrap;}
   .pu{
     font-family:"Courier New",monospace; font-size:12px; letter-spacing:1px;
     background:var(--card); border:1px solid var(--line); border-radius:10px;
@@ -144,16 +156,19 @@
   .pu.armed{border-color:var(--good); background:#EEF3E9; color:#5A7549; animation:armedPulse 1.4s infinite;}
   @keyframes armedPulse{0%,100%{box-shadow:0 0 0 0 rgba(125,155,106,.4);}50%{box-shadow:0 0 0 6px rgba(125,155,106,0);}}
   .pu small{display:block; font-size:9px; color:var(--muted); margin-top:2px;}
+  .setBody select{font-family:"Courier New",monospace; font-size:13px; padding:4px 8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer;}
   .pu.armed small{color:#5A7549;}
 
   #wordRow{
-    display:flex; justify-content:center; gap:10px; flex-wrap:wrap;
-    margin:22px 0 8px; min-height:52px;
+    position:absolute; top:14px; left:0; right:0; z-index:5; pointer-events:none;
+    display:flex; justify-content:center; gap:9px; flex-wrap:wrap;
+    padding:0 14px; min-height:46px;
   }
   .slot{
     width:34px; height:46px; display:flex; align-items:flex-start; justify-content:center;
-    border-bottom:4px solid var(--ink); font-family:"Courier New",monospace;
-    font-size:34px; font-weight:bold; transform-origin:50% 100%;
+    border-bottom:4px solid rgba(240,238,230,.5); font-family:"Courier New",monospace;
+    color:#F5F3EC; font-size:34px; font-weight:bold; transform-origin:50% 100%;
+    text-shadow:0 2px 6px rgba(0,0,0,.35);
   }
   .slot.rev{animation:slotPop .38s var(--spring);}
   @keyframes slotPop{
@@ -162,14 +177,19 @@
     70%{transform:scale(.92,1.12);}
     100%{transform:scale(1);}
   }
-  #hintRow{text-align:center; margin:10px 0 18px;}
-  #hintBtn{
+  #hintRow{text-align:center; margin:6px 0 12px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
+  #hintBtn, #viBtn, #revBtn{
     background:var(--card); border:1px solid var(--line); border-radius:10px;
     font-family:"Courier New",monospace; font-size:13px; letter-spacing:1px;
     padding:9px 18px; cursor:pointer; color:var(--ink);
   }
-  #hintBtn:hover:not(:disabled){border-color:var(--accent); color:var(--accent);}
-  #hintBtn:disabled{opacity:.4; cursor:default;}
+  #hintBtn:hover:not(:disabled), #viBtn:hover:not(:disabled), #revBtn:hover:not(:disabled){border-color:var(--accent); color:var(--accent);}
+  #hintBtn:disabled, #viBtn:disabled, #revBtn:disabled{opacity:.4; cursor:default;}
+  #viHintLine{
+    text-align:center; margin:-4px 0 12px; font-family:"Courier New",monospace;
+    font-size:14px; font-weight:bold; letter-spacing:1px; color:#7D9B6A;
+  }
+  #viHintLine.hidden{display:none;}
 
   #kb{display:flex; flex-direction:column; gap:8px; align-items:center;}
   .kbRow{display:flex; gap:7px;}
@@ -236,10 +256,12 @@
   .slot.gold{color:var(--gold); border-bottom-color:var(--gold); animation:goldPop .6s var(--spring);}
   @keyframes goldPop{0%{transform:scale(.6,.6);}45%{transform:scale(1.3,.75);}70%{transform:scale(.9,1.15);}100%{transform:scale(1);}}
   .viewWords{
-    display:block; margin-top:7px; font-family:"Courier New",monospace; font-size:10px;
-    letter-spacing:1px; color:var(--accent); text-decoration:underline dotted; cursor:pointer;
+    display:inline-block; margin-top:10px; font-family:"Courier New",monospace; font-size:12px;
+    letter-spacing:1px; color:var(--accent); cursor:pointer; font-weight:bold;
+    border:1.5px solid var(--accent); border-radius:999px; padding:4px 13px;
+    background:rgba(217,119,87,.10); transition:background .15s, color .15s, transform .12s;
   }
-  .viewWords:hover{color:var(--accent-dark);}
+  .viewWords:hover{background:var(--accent); color:#FAF9F5; transform:translateY(-1px);}
   #wordsModal{
     position:fixed; inset:0; z-index:62; display:flex; align-items:center; justify-content:center;
     background:rgba(38,36,33,.45); backdrop-filter:blur(2px);
@@ -330,15 +352,33 @@
     width:36px; height:36px; margin:0 auto; border-radius:50%;
     background:var(--gold); color:#fff; font-size:19px; line-height:36px;
   }
-  .skinList{display:flex; flex-direction:column; gap:10px; margin-bottom:18px;}
+  .skinBal{font-family:"Courier New",monospace; font-size:12px; letter-spacing:1px; color:var(--muted); margin-bottom:14px; text-align:center;}
+  .skinBal b{color:var(--gold); font-size:15px;}
+  .skinCards{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
   .skinCard{
-    display:flex; align-items:center; gap:16px; border:1px solid var(--line);
-    border-radius:12px; padding:10px 14px; text-align:left;
+    position:relative; display:flex; flex-direction:column; align-items:center; gap:7px;
+    border:2px solid var(--line); border-radius:14px; padding:12px 8px 10px; background:var(--card);
+    transition:transform .15s var(--spring), border-color .15s, box-shadow .15s;
   }
-  .skinPrev{image-rendering:pixelated; border-radius:8px; flex-shrink:0;}
-  .skinInfo{flex:1;}
-  .skinInfo b{font-family:"Courier New",monospace; font-size:13px; letter-spacing:1px; display:block;}
-  .skinInfo small{color:var(--muted); font-size:11px;}
+  .skinCard:hover{transform:translateY(-3px); box-shadow:0 8px 18px rgba(61,57,41,.16);}
+  .skinCard.on{border-color:var(--accent); box-shadow:0 0 0 2px rgba(217,119,87,.25);}
+  .skinCard.locked .skinPrev{opacity:.82;}
+  .skinPrev{image-rendering:pixelated; border-radius:8px; width:100%; max-width:130px; height:auto;}
+  .skinTier{font-family:"Courier New",monospace; font-size:8px; letter-spacing:2px; padding:2px 9px; border-radius:999px; color:#fff;}
+  .skinName{font-family:"Courier New",monospace; font-size:12px; letter-spacing:1px;}
+  .tr-COMMON{background:#8A8578;} .tr-UNCOMMON{background:#6F9A63;} .tr-RARE{background:#5A8FB3;}
+  .tr-EPIC{background:#8C6FC0;} .tr-LEGENDARY{background:linear-gradient(90deg,#E7C24A,#C99B27);}
+  .tr-MYTHIC{background:linear-gradient(90deg,#E85D9A,#8C6FC0);} .tr-SEASONAL{background:#C0392B;}
+  .skBtn{font-family:"Courier New",monospace; font-size:11px; letter-spacing:1px; cursor:pointer;
+    border-radius:9px; padding:7px 8px; width:100%; border:1px solid var(--line);
+    background:var(--card); color:var(--ink); transition:transform .12s, filter .12s, border-color .12s;}
+  .skBtn:active{transform:scale(1.05,.9);}
+  .skBtn.sel:hover{border-color:var(--accent); color:var(--accent);}
+  .skBtn.on{background:var(--accent); border-color:var(--accent); color:#fff; cursor:default;}
+  .skBtn.buy{background:var(--gold); border-color:var(--gold); color:#3A2620; font-weight:bold;}
+  .skBtn.buy:hover{filter:brightness(1.08);}
+  .skBtn.buy.no{background:var(--card); color:var(--muted); border-color:var(--line); cursor:default; opacity:.55;}
+  @media (max-width:520px){ .skinCards{grid-template-columns:repeat(2,1fr);} }
   #duelSub{font-size:12px; color:var(--muted); font-family:"Courier New",monospace; letter-spacing:1px; margin-bottom:16px;}
   #duelInput{
     display:block; width:100%; max-width:320px; margin:0 auto 8px;
@@ -362,7 +402,7 @@
     padding:7px 16px; cursor:pointer; color:var(--muted);
   }
   .diffChip:hover{border-color:var(--accent);}
-  .diffChip.sel{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .diffChip.sel{background:var(--ink); border-color:var(--ink); color:var(--bg);}
   #bossTag{
     font-family:"Courier New",monospace; font-size:10px; letter-spacing:1px;
     background:var(--bad); color:#fff; border-radius:6px; padding:2px 7px;
@@ -439,7 +479,7 @@
       <button class="metaBtn" id="statsBtn">STATS</button>
       <button class="metaBtn" id="settingsBtn">SETTINGS</button>
     </div>
-    <div id="menuFooter">6 misses and the pig loses its patience. &mdash; v5.1</div>
+    <div id="menuFooter">6 misses and the pig loses its patience. &mdash; v5.7</div>
   </div>
 
   <!-- GAME -->
@@ -462,18 +502,19 @@
         <div id="revealEmo"></div>
         <div id="revealName"></div>
       </div></div>
+      <div id="wordRow"></div>
     </div>
     <div id="puRow">
       <button class="pu" id="puFreeze">FREEZE &middot;20&cent;<small>next miss forgiven &middot; 1</small></button>
       <button class="pu" id="puVowels">VOWELS &middot;30&cent;<small>reveal all vowels &middot; 2</small></button>
       <button class="pu" id="puWall">WALL &middot;40&cent;<small>block the kick &middot; 3</small></button>
     </div>
-    <div id="wordRow"></div>
     <div id="comboWrap">
       <span id="comboLbl">COMBO</span>
       <div id="comboBar"><div class="cseg"></div><div class="cseg"></div><div class="cseg"></div><div class="cseg"></div></div>
     </div>
-    <div id="hintRow"><button id="hintBtn">50/50 (15&cent;) &middot; H</button></div>
+    <div id="hintRow"><button id="hintBtn">50/50 (15&cent;) &middot; H</button><button id="viBtn">G&#7906;I &Yacute; VN (100&cent;) &middot; 4</button></div>
+    <div id="viHintLine" class="hidden"></div>
     <div id="kb"></div>
   </div>
 
@@ -537,7 +578,7 @@
 <script>
 'use strict';
 /* =========================================================
-   HANGPIG v5.1 - Guess or Get Kicked
+   HANGPIG v5.7 - Guess or Get Kicked
    Juice pass: squash & stretch, hitstop, rotational shake,
    particles, streak-pitched audio, escalating celebration.
    New mechanics: power-ups (FREEZE / VOWELS / WALL),
@@ -564,6 +605,82 @@ const TOPICS = {
   GEOGRAPHY:["BRAZIL","CANADA","EGYPT","FRANCE","GERMANY","ICELAND","JAPAN","KENYA","MEXICO","NORWAY","PORTUGAL","RUSSIA","SPAIN","THAILAND","VIETNAM","AUSTRALIA","ARGENTINA","MOROCCO","GREECE","TURKEY","FINLAND","SWEDEN","POLAND","AUSTRIA","BELGIUM","COLOMBIA","DENMARK","ETHIOPIA","HUNGARY","INDONESIA","JAMAICA","LEBANON","MALAYSIA","NIGERIA","PANAMA","ROMANIA","SENEGAL","UKRAINE","URUGUAY","SINGAPORE"]
 };
 const VOWELS = ["A","E","I","O","U"];
+
+/* Vietnamese hints - GỢI Ý VN */
+const VI_HINTS = {
+  ELEPHANT:"con voi", GIRAFFE:"hươu cao cổ", PENGUIN:"chim cánh cụt", DOLPHIN:"cá heo", KANGAROO:"chuột túi",
+  OCTOPUS:"bạch tuộc", BUTTERFLY:"con bướm", CROCODILE:"cá sấu", HEDGEHOG:"con nhím", FLAMINGO:"chim hồng hạc",
+  SQUIRREL:"con sóc", RACCOON:"gấu mèo", LEOPARD:"báo hoa mai", OSTRICH:"đà điểu", PEACOCK:"con công",
+  JELLYFISH:"con sứa", HAMSTER:"chuột cảnh nhỏ", WALRUS:"hải mã", BUFFALO:"con trâu", CHEETAH:"báo săn chạy nhanh nhất",
+  GORILLA:"khỉ đột", IGUANA:"kỳ nhông lớn", LOBSTER:"tôm hùm", MEERKAT:"cầy đất hay đứng canh gác", PLATYPUS:"thú mỏ vịt",
+  RHINOCEROS:"tê giác", SCORPION:"bọ cạp", TORTOISE:"rùa cạn", VULTURE:"kền kền", WOMBAT:"gấu túi đào hang Úc",
+  ANTELOPE:"linh dương", BEAVER:"hải ly đắp đập", CHAMELEON:"tắc kè hoa đổi màu", DONKEY:"con lừa", FALCON:"chim cắt",
+  GAZELLE:"linh dương nhỏ nhanh nhẹn", HYENA:"linh cẩu", JAGUAR:"báo đốm châu Mỹ", KOALA:"gấu túi ăn lá bạch đàn", OTTER:"rái cá",
+  PANCAKE:"bánh kếp chảo dẹt", BURRITO:"bánh cuốn nhân kiểu Mexico", SPAGHETTI:"mì Ý sợi dài", AVOCADO:"quả bơ", CROISSANT:"bánh sừng bò Pháp",
+  DUMPLING:"bánh bao / sủi cảo", LASAGNA:"mì Ý nướng xếp lớp", MUFFIN:"bánh nướng cốc nhỏ", NOODLES:"mì sợi", OMELETTE:"trứng chiên cuộn",
+  PRETZEL:"bánh quy xoắn Đức", QUESADILLA:"bánh kẹp phô mai Mexico", RAVIOLI:"mì Ý gối nhân", SANDWICH:"bánh mì kẹp", WAFFLE:"bánh nướng ô vuông",
+  YOGURT:"sữa chua", BROWNIE:"bánh sô-cô-la đặc", CUPCAKE:"bánh ngọt cốc nhỏ có kem", DOUGHNUT:"bánh vòng chiên", ESPRESSO:"cà phê Ý đậm đặc",
+  FALAFEL:"viên đậu gà chiên Trung Đông", GRANOLA:"ngũ cốc nướng ăn sáng", HUMMUS:"sốt nghiền từ đậu gà", KETCHUP:"tương cà chua", LEMONADE:"nước chanh",
+  MEATBALL:"thịt viên", NACHOS:"bánh ngô chiên phủ phô mai", OATMEAL:"cháo yến mạch", POPCORN:"bỏng ngô", PUDDING:"món tráng miệng mềm ngọt",
+  RISOTTO:"cơm Ý nấu sệt", SUSHI:"cơm cuộn cá sống Nhật", TIRAMISU:"bánh ngọt cà phê Ý", VANILLA:"hương liệu từ quả lan", WALNUT:"hạt óc chó",
+  ZUCCHINI:"bí ngòi", BISCUIT:"bánh quy", CHEESE:"phô mai", TACOS:"bánh ngô gập nhân Mexico", PIZZA:"bánh Ý tròn phủ phô mai",
+  ALGORITHM:"thuật toán", BROWSER:"trình duyệt web", COMPUTER:"máy vi tính", DATABASE:"cơ sở dữ liệu", ETHERNET:"mạng LAN có dây",
+  FIREWALL:"tường lửa", GIGABYTE:"đơn vị đo dung lượng", HARDWARE:"phần cứng", INTERNET:"mạng toàn cầu", JAVASCRIPT:"ngôn ngữ lập trình web",
+  KEYBOARD:"bàn phím", LAPTOP:"máy tính xách tay", MONITOR:"màn hình máy tính", NETWORK:"mạng lưới", PASSWORD:"mật khẩu",
+  PROCESSOR:"bộ xử lý trung tâm", ROBOT:"người máy", SOFTWARE:"phần mềm", TERMINAL:"cửa sổ dòng lệnh", UPLOAD:"tải lên",
+  VIRTUAL:"ảo, không có thật", WIRELESS:"không dây", BLUETOOTH:"kết nối không dây tầm ngắn", CHATBOT:"máy trò chuyện tự động", DOWNLOAD:"tải xuống",
+  EMULATOR:"trình giả lập", FIRMWARE:"phần mềm nhúng trong thiết bị", GRAPHICS:"đồ họa", HEADPHONES:"tai nghe", JOYSTICK:"cần điều khiển game",
+  MAINFRAME:"máy tính cỡ lớn", MICROCHIP:"vi mạch", PIXEL:"điểm ảnh", QUANTUM:"lượng tử", ROUTER:"bộ phát wifi / định tuyến",
+  SERVER:"máy chủ", TOKEN:"mã thông báo", WEBCAM:"camera gắn máy tính", CIRCUIT:"mạch điện", ENCRYPTION:"mã hóa dữ liệu",
+  ACTOR:"diễn viên nam", BLOCKBUSTER:"phim bom tấn", CAMERA:"máy quay phim", DIRECTOR:"đạo diễn", EPISODE:"tập phim",
+  FANTASY:"thể loại kỳ ảo", HORROR:"thể loại kinh dị", MUSICAL:"phim ca nhạc", NARRATOR:"người kể chuyện", PREMIERE:"buổi công chiếu đầu tiên",
+  ROMANCE:"thể loại lãng mạn", SCREENPLAY:"kịch bản phim", SEQUEL:"phần phim tiếp theo", SOUNDTRACK:"nhạc phim", SUBTITLE:"phụ đề",
+  THRILLER:"phim giật gân hồi hộp", TRAILER:"đoạn giới thiệu phim", VILLAIN:"nhân vật phản diện", WESTERN:"phim cao bồi miền Tây", ANIMATION:"phim hoạt hình",
+  AUDITION:"buổi thử vai", COMEDY:"thể loại hài", COSTUME:"trang phục diễn", CREDITS:"danh sách tên cuối phim", DIALOGUE:"lời thoại",
+  DOCUMENTARY:"phim tài liệu", DRAMA:"thể loại chính kịch", FLASHBACK:"cảnh hồi tưởng quá khứ", MAKEUP:"hóa trang", MONTAGE:"chuỗi cảnh ghép nhanh",
+  PROJECTOR:"máy chiếu", REHEARSAL:"buổi tập dượt", SCRIPT:"kịch bản", SPOTLIGHT:"đèn rọi sân khấu", STUDIO:"phim trường / xưởng phim",
+  SUSPENSE:"sự hồi hộp căng thẳng", THEATER:"rạp hát", CLIFFHANGER:"kết tập lửng gay cấn", STUNTMAN:"diễn viên đóng thế", CINEMA:"rạp chiếu phim",
+  AVALANCHE:"tuyết lở", BLOSSOM:"hoa nở", CANYON:"hẻm núi sâu", DESERT:"sa mạc", EARTHQUAKE:"động đất",
+  FOREST:"rừng cây", GLACIER:"sông băng", HORIZON:"đường chân trời", ISLAND:"hòn đảo", JUNGLE:"rừng rậm nhiệt đới",
+  LAGOON:"đầm phá ven biển", MEADOW:"đồng cỏ", MOUNTAIN:"ngọn núi", OCEAN:"đại dương", PRAIRIE:"thảo nguyên Bắc Mỹ",
+  RAINBOW:"cầu vồng", SAVANNA:"đồng cỏ châu Phi", THUNDER:"tiếng sấm", VOLCANO:"núi lửa", WATERFALL:"thác nước",
+  BREEZE:"gió nhẹ", CAVERN:"hang động lớn", ECLIPSE:"nhật thực / nguyệt thực", FOSSIL:"hóa thạch", GEYSER:"mạch nước nóng phun",
+  HAILSTORM:"trận mưa đá", ICEBERG:"núi băng trôi", LIGHTNING:"tia sét", MONSOON:"gió mùa mưa lớn", NEBULA:"tinh vân trong vũ trụ",
+  OASIS:"ốc đảo giữa sa mạc", PEBBLE:"viên sỏi nhỏ", RIVERBANK:"bờ sông", SEASHELL:"vỏ sò biển", SUNRISE:"bình minh",
+  TORNADO:"lốc xoáy", TUNDRA:"đài nguyên lạnh giá", WILDFIRE:"cháy rừng", ORCHID:"hoa lan", SWAMP:"đầm lầy",
+  ARCHERY:"bắn cung", BADMINTON:"cầu lông", BASEBALL:"bóng chày", BASKETBALL:"bóng rổ", BOWLING:"ném bóng đổ ky",
+  BOXING:"quyền anh", CRICKET:"môn bóng gậy của Anh", CYCLING:"đua xe đạp", FENCING:"đấu kiếm", FOOTBALL:"bóng bầu dục Mỹ",
+  GYMNASTICS:"thể dục dụng cụ", HANDBALL:"bóng ném", HOCKEY:"khúc côn cầu", JAVELIN:"ném lao", JUDO:"võ vật Nhật Bản",
+  KARATE:"võ tay không Nhật Bản", KAYAKING:"chèo thuyền nhỏ một mái", LACROSSE:"bóng vợt lưới", MARATHON:"chạy bộ 42km", NETBALL:"bóng lưới nữ",
+  OLYMPICS:"thế vận hội", PENALTY:"quả phạt đền", QUARTERBACK:"tiền vệ bóng bầu dục", REFEREE:"trọng tài", ROWING:"đua thuyền chèo",
+  RUGBY:"bóng bầu dục", SKATEBOARD:"ván trượt", SKIING:"trượt tuyết", SNOWBOARD:"ván trượt tuyết", SOCCER:"bóng đá",
+  SOFTBALL:"bóng mềm", SPRINTER:"VĐV chạy nước rút", STADIUM:"sân vận động", SURFING:"lướt sóng", SWIMMING:"bơi lội",
+  TENNIS:"quần vợt", TROPHY:"cúp vô địch", VOLLEYBALL:"bóng chuyền", WRESTLING:"đấu vật", GOALKEEPER:"thủ môn",
+  GUITAR:"đàn 6 dây phổ biến", PIANO:"đàn phím dương cầm", VIOLIN:"đàn vĩ cầm", TRUMPET:"kèn đồng 3 nút", DRUMMER:"người chơi trống",
+  ORCHESTRA:"dàn nhạc giao hưởng", MELODY:"giai điệu", RHYTHM:"nhịp điệu", CONCERT:"buổi hòa nhạc", CHORUS:"điệp khúc / hợp xướng",
+  SOPRANO:"giọng nữ cao", BALLAD:"bản nhạc trữ tình chậm", HARMONY:"hòa âm", OPERA:"nhạc kịch cổ điển", SYMPHONY:"bản giao hưởng",
+  ACOUSTIC:"nhạc mộc không điện", VOCALIST:"ca sĩ hát chính", LYRICS:"lời bài hát", TEMPO:"tốc độ bản nhạc", MAESTRO:"nhạc trưởng bậc thầy",
+  SAXOPHONE:"kèn đồng cong chơi jazz", CELLO:"đàn dây lớn kẹp giữa hai chân", FLUTE:"sáo ngang", HARMONICA:"kèn nhỏ thổi bằng miệng", KARAOKE:"hát theo lời chạy trên màn hình",
+  MICROPHONE:"thiết bị thu giọng nói", PLAYLIST:"danh sách phát nhạc", ALBUM:"tuyển tập ca khúc", ENCORE:"hát thêm khi khán giả yêu cầu", FESTIVAL:"lễ hội âm nhạc",
+  ACCORDION:"phong cầm kéo đẩy", BANJO:"đàn dây tròn nhạc đồng quê", CLARINET:"kèn gỗ đen thổi dọc", UKULELE:"đàn 4 dây nhỏ Hawaii", TAMBOURINE:"trống lắc lục lạc",
+  XYLOPHONE:"đàn gõ thanh gỗ", MANDOLIN:"đàn dây nhỏ hình giọt nước", TROMBONE:"kèn đồng ống kéo", CONDUCTOR:"người chỉ huy dàn nhạc", JUKEBOX:"máy phát nhạc bỏ xu",
+  GRAVITY:"trọng lực", MOLECULE:"phân tử", NEUTRON:"hạt không mang điện", ELECTRON:"hạt mang điện âm", CHEMISTRY:"môn hóa học",
+  BIOLOGY:"môn sinh học", PHYSICS:"môn vật lý", GALAXY:"thiên hà", TELESCOPE:"kính thiên văn", MICROSCOPE:"kính hiển vi",
+  VACCINE:"thuốc tiêm phòng bệnh", GENETICS:"di truyền học", EVOLUTION:"thuyết tiến hóa", PHOTON:"hạt ánh sáng", MAGNET:"nam châm",
+  FRICTION:"lực ma sát", VELOCITY:"vận tốc", ENZYME:"chất xúc tác sinh học", BACTERIA:"vi khuẩn", NUCLEUS:"hạt nhân",
+  ORBIT:"quỹ đạo", PLASMA:"trạng thái thứ 4 của vật chất", QUASAR:"chuẩn tinh sáng nhất vũ trụ", ISOTOPE:"đồng vị", CATALYST:"chất xúc tác",
+  PENDULUM:"con lắc", SPECTRUM:"quang phổ", THEOREM:"định lý", HYPOTHESIS:"giả thuyết", LABORATORY:"phòng thí nghiệm",
+  ASTEROID:"tiểu hành tinh", COMET:"sao chổi", SATELLITE:"vệ tinh", OXYGEN:"khí để thở", HYDROGEN:"nguyên tố nhẹ nhất",
+  CARBON:"nguyên tố của than và kim cương", PROTEIN:"chất đạm", NEURON:"tế bào thần kinh", DENSITY:"khối lượng riêng", INERTIA:"quán tính",
+  BRAZIL:"nước Nam Mỹ, vua bóng đá", CANADA:"nước lá phong Bắc Mỹ", EGYPT:"nước kim tự tháp", FRANCE:"nước tháp Eiffel", GERMANY:"nước Đức",
+  ICELAND:"đảo quốc băng và núi lửa", JAPAN:"xứ sở hoa anh đào", KENYA:"nước Đông Phi nhiều thú hoang", MEXICO:"nước của taco, Bắc Mỹ", NORWAY:"nước Bắc Âu nhiều vịnh hẹp",
+  PORTUGAL:"quê hương Ronaldo", RUSSIA:"nước lớn nhất thế giới", SPAIN:"nước đấu bò Tây Âu", THAILAND:"xứ sở chùa vàng", VIETNAM:"quê hương chúng ta",
+  AUSTRALIA:"xứ sở chuột túi", ARGENTINA:"quê hương Messi", MOROCCO:"nước Bắc Phi", GREECE:"cái nôi thần thoại Hy Lạp", TURKEY:"nước nằm giữa Á - Âu",
+  FINLAND:"nước hạnh phúc nhất Bắc Âu", SWEDEN:"nước Bắc Âu của IKEA", POLAND:"nước Ba Lan", AUSTRIA:"nước của Mozart", BELGIUM:"nước sô-cô-la châu Âu",
+  COLOMBIA:"nước Nam Mỹ của cà phê", DENMARK:"nước của LEGO", ETHIOPIA:"nước Đông Phi, nôi cà phê", HUNGARY:"nước có thủ đô Budapest", INDONESIA:"vạn đảo Đông Nam Á",
+  JAMAICA:"đảo quốc reggae Caribe", LEBANON:"nước Trung Đông ven Địa Trung Hải", MALAYSIA:"nước tháp đôi Petronas", NIGERIA:"nước đông dân nhất châu Phi", PANAMA:"nước có kênh đào nổi tiếng",
+  ROMANIA:"nước của Dracula", SENEGAL:"nước Tây Phi", UKRAINE:"nước Đông Âu cạnh Nga", URUGUAY:"nước nhỏ Nam Mỹ mê bóng đá", SINGAPORE:"đảo quốc sư tử"
+};
 
 /* ---------------- SPRITES ---------------- */
 const PIG = [
@@ -631,6 +748,7 @@ const PU_COST = { freeze:20, vowels:30, wall:40 };
 /* ---------------- STATS / BADGES / SKINS ---------------- */
 let stats = { totalPts:0, goals:0, nohintStreak:0, taBest:0, taBestWords:0, coins:0, games:0, wins:0, missDist:[0,0,0,0,0,0,0,0,0] };
 try{ Object.assign(stats, JSON.parse(localStorage.getItem("hangpig_stats")||"{}")); }catch(e){}
+if(!stats.games && !stats.coins){ stats.coins = 50; } /* starter coins for new players */
 function saveStats(){ try{ localStorage.setItem("hangpig_stats", JSON.stringify(stats)); }catch(e){} }
 
 let ownedBadges = {};
@@ -676,27 +794,92 @@ function awardPts(n){
 let skin = "classic";
 try{ skin = localStorage.getItem("hangpig_skin") || "classic"; }catch(e){}
 const SKINS = [
-  {id:"classic", name:"CLASSIC", need:0},
-  {id:"cap",     name:"CAP",     need:300},
-  {id:"scarf",   name:"SCARF",   need:800},
-  {id:"shades",  name:"SHADES",  need:1500},
-  {id:"gold",    name:"GOLDEN",  need:3000},
+  {id:"classic",   name:"CLASSIC",   need:0,    tier:"COMMON"},
+  {id:"cap",       name:"CAP",       need:300,  tier:"UNCOMMON"},
+  {id:"pink",      name:"BUBBLEGUM", need:300,  tier:"UNCOMMON"},
+  {id:"mint",      name:"MINT",      need:350,  tier:"UNCOMMON"},
+  {id:"flower",    name:"FLOWER",    need:350,  tier:"UNCOMMON"},
+  {id:"bandana",   name:"BANDANA",   need:400,  tier:"UNCOMMON"},
+  {id:"mustache",  name:"MUSTACHE",  need:600,  tier:"RARE"},
+  {id:"panda",     name:"PANDA",     need:700,  tier:"RARE"},
+  {id:"ghost",     name:"GHOST",     need:700,  tier:"RARE"},
+  {id:"charcoal",  name:"CHARCOAL",  need:750,  tier:"RARE"},
+  {id:"scarf",     name:"SCARF",     need:800,  tier:"RARE"},
+  {id:"shades",    name:"SHADES",    need:800,  tier:"RARE"},
+  {id:"monocle",   name:"MONOCLE",   need:900,  tier:"RARE"},
+  {id:"party",     name:"PARTY",     need:1200, tier:"EPIC"},
+  {id:"horns",     name:"DEVIL",     need:1300, tier:"EPIC"},
+  {id:"headphones",name:"DJ",        need:1300, tier:"EPIC"},
+  {id:"chef",      name:"CHEF",      need:1400, tier:"EPIC"},
+  {id:"halo",      name:"ANGEL",     need:1400, tier:"EPIC"},
+  {id:"crown",     name:"KING",      need:1500, tier:"EPIC"},
+  {id:"cowboy",    name:"COWBOY",    need:1500, tier:"EPIC"},
+  {id:"wizard",    name:"WIZARD",    need:1600, tier:"EPIC"},
+  {id:"ninja",     name:"NINJA",     need:1600, tier:"EPIC"},
+  {id:"pirate",    name:"PIRATE",    need:1700, tier:"EPIC"},
+  {id:"santa",     name:"SANTA",     need:2000, tier:"SEASONAL"},
+  {id:"pumpkin",   name:"PUMPKIN",   need:2000, tier:"SEASONAL"},
+  {id:"robot",     name:"ROBOT",     need:2500, tier:"LEGENDARY"},
+  {id:"zombie",    name:"ZOMBIE",    need:2600, tier:"LEGENDARY"},
+  {id:"gold",      name:"GOLDEN",    need:3000, tier:"LEGENDARY"},
+  {id:"astronaut", name:"ASTRONAUT", need:3200, tier:"LEGENDARY"},
+  {id:"rainbow",   name:"RAINBOW",   need:6000, tier:"MYTHIC"},
+  {id:"galaxy",    name:"GALAXY",    need:6500, tier:"MYTHIC"},
+  {id:"fire",      name:"INFERNO",   need:7000, tier:"MYTHIC"},
 ];
+let ownedSkins = {classic:true};
+try{ ownedSkins = Object.assign({classic:true}, JSON.parse(localStorage.getItem("hangpig_owned_skins")||"{}")); }catch(e){ ownedSkins = {classic:true}; }
+const GRANDFATHER = ["classic","cap","scarf","shades","gold"];
+SKINS.forEach(sk=>{ if(sk.need===0 || skin===sk.id || (GRANDFATHER.indexOf(sk.id)>=0 && stats.totalPts>=sk.need)) ownedSkins[sk.id]=true; });
+function saveOwnedSkins(){ try{ localStorage.setItem("hangpig_owned_skins", JSON.stringify(ownedSkins)); }catch(e){} }
+saveOwnedSkins();
 const PIGC_GOLD = {P:"#E7C24A", D:"#C99B27", K:"#3A2620", W:"#FFFFFF"};
-function pigColors(){ return skin === "gold" ? PIGC_GOLD : PIGC; }
+const SKIN_PAL = {
+  classic:PIGC, gold:PIGC_GOLD,
+  pink:  {P:"#F4A6C0", D:"#D97BA0", K:"#3A2620", W:"#FFFFFF"},
+  mint:  {P:"#8FD9C0", D:"#5FB89C", K:"#2A3630", W:"#FFFFFF"},
+  panda: {P:"#F2F1EC", D:"#CBC9C1", K:"#2A2620", W:"#FFFFFF"},
+  ghost: {P:"#D9DCE6", D:"#B4BAC9", K:"#3A2620", W:"#FFFFFF"},
+  charcoal:{P:"#5A554E", D:"#3E3A34", K:"#141210", W:"#FFFFFF"},
+  robot: {P:"#B9C0C7", D:"#8A9299", K:"#1E2226", W:"#FFFFFF"},
+  zombie:{P:"#8FB07A", D:"#6E8C5C", K:"#241E16", W:"#FFFFFF"},
+  astronaut:{P:"#E8E9EE", D:"#C2C6D2", K:"#2A2E38", W:"#FFFFFF"},
+  pumpkin:{P:"#E7822E", D:"#C4611C", K:"#3A2016", W:"#FFF3D0"},
+};
+function pigColors(){
+  if(skin === "rainbow"){ const h = Math.floor(performance.now()/14) % 360; return {P:"hsl("+h+",70%,68%)", D:"hsl("+h+",60%,54%)", K:"#3A2620", W:"#FFFFFF"}; }
+  if(skin === "galaxy") return {P:"#3B3160", D:"#2A2247", K:"#0E0B1A", W:"#FFFFFF"};
+  if(skin === "fire")   return {P:"#F0894A", D:"#D2622A", K:"#3A2016", W:"#FFF3D0"};
+  return SKIN_PAL[skin] || PIGC;
+}
 function drawSkinExtras(ctx, x, yTop, sx, sy){
-  if(skin === "cap"){
-    ctx.fillStyle = "#3D3929";
-    ctx.fillRect(x + 9.6*sx, yTop + 5.2*sy, 6.4*sx, 1.4*sy);
-    ctx.fillRect(x + 15.6*sx, yTop + 6.1*sy, 3.2*sx, 0.9*sy);
-  } else if(skin === "scarf"){
-    ctx.fillStyle = "#B3573F";
-    ctx.fillRect(x + 12.6*sx, yTop + 9.3*sy, 5.2*sx, 1.3*sy);
-    ctx.fillRect(x + 12.8*sx, yTop + 10.5*sy, 1.8*sx, 2.4*sy);
-  } else if(skin === "shades"){
-    ctx.fillStyle = "#1E1B18";
-    ctx.fillRect(x + 11.4*sx, yTop + 7.9*sy, 4.4*sx, 1.4*sy);
-    ctx.fillRect(x + 15.8*sx, yTop + 8.2*sy, 1.6*sx, 0.6*sy);
+  const R = (a,b,w,h,col)=>{ ctx.fillStyle = col; ctx.fillRect(Math.round(x+a*sx), Math.round(yTop+b*sy), Math.ceil(w*sx), Math.ceil(h*sy)); };
+  const T = performance.now();
+  switch(skin){
+    case "cap": R(9.6,5.2,6.4,1.4,"#3D3929"); R(15.6,6.1,3.2,0.9,"#3D3929"); break;
+    case "scarf": R(12.6,9.3,5.2,1.3,"#B3573F"); R(12.8,10.5,1.8,2.4,"#B3573F"); break;
+    case "shades": R(11.4,7.9,4.4,1.4,"#1E1B18"); R(15.8,8.2,1.6,0.6,"#1E1B18"); break;
+    case "crown": R(10,4.6,6.6,1.2,"#E7C24A"); R(10.1,3.3,1.3,1.5,"#E7C24A"); R(12.7,2.9,1.3,1.9,"#E7C24A"); R(15.3,3.3,1.3,1.5,"#E7C24A"); R(12.9,4.7,0.9,0.9,"#C0392B"); break;
+    case "party": R(11.0,4.3,4.2,1.1,"#E85D9A"); R(11.7,3.2,2.8,1.2,"#F2A6C6"); R(12.4,2.1,1.5,1.3,"#E85D9A"); R(12.5,1.2,1.1,1.1,"#FFFFFF"); break;
+    case "halo": R(10.6,2.6,5.4,0.7,"#F2D24A"); R(10.6,3.3,0.7,0.7,"#F2D24A"); R(15.3,3.3,0.7,0.7,"#F2D24A"); break;
+    case "horns": R(9.4,4.2,1.1,1.6,"#8C2F1E"); R(9.0,3.3,1.0,1.1,"#8C2F1E"); R(15.8,4.2,1.1,1.6,"#8C2F1E"); R(16.2,3.3,1.0,1.1,"#8C2F1E"); break;
+    case "mustache": R(14.2,10.1,3.6,0.9,"#3A2620"); R(13.9,10.8,0.8,0.7,"#3A2620"); R(17.3,10.8,0.8,0.7,"#3A2620"); break;
+    case "monocle": R(11.7,7.3,2.8,0.4,"#C9A227"); R(11.7,9.0,2.8,0.4,"#C9A227"); R(11.5,7.5,0.4,1.6,"#C9A227"); R(14.3,7.5,0.4,1.6,"#C9A227"); R(12.7,9.4,0.4,2.2,"#C9A227"); break;
+    case "headphones": R(9.7,3.7,6.8,0.8,"#2A2A2E"); R(9.0,4.3,1.5,2.1,"#3A3A40"); R(15.8,4.3,1.5,2.1,"#3A3A40"); break;
+    case "bandana": R(9.7,6.0,7.1,1.3,"#C0392B"); R(8.9,6.2,1.1,1.1,"#C0392B"); R(8.3,6.6,0.8,1.7,"#A32E22"); break;
+    case "flower": R(9.4,4.0,0.9,0.9,"#F2A6C6"); R(10.3,4.0,0.9,0.9,"#F2A6C6"); R(9.4,4.9,0.9,0.9,"#F2A6C6"); R(10.3,4.9,0.9,0.9,"#F2A6C6"); R(9.85,4.45,0.8,0.8,"#F2D24A"); break;
+    case "wizard": R(9.6,4.7,6.8,0.8,"#4A3A7A"); R(11.6,1.6,2.8,3.2,"#5A46A0"); R(12.1,1.0,1.7,1.0,"#5A46A0"); R(12.7,2.5,0.9,0.9,"#F2D24A"); break;
+    case "robot": R(12.8,2.5,0.5,2.1,"#8A9299"); R(12.4,1.9,1.2,1.2,"#E05050"); break;
+    case "zombie": R(11.0,6.9,3.2,0.4,"#241E16"); R(11.6,6.5,0.4,1.2,"#241E16"); R(13.0,6.5,0.4,1.2,"#241E16"); R(17.6,9.8,0.9,1.6,"#6E6A5C"); break;
+    case "pirate": R(9.3,4.0,7.4,1.5,"#241E16"); R(10.6,3.2,4.8,1.0,"#241E16"); R(11.5,7.5,2.9,1.9,"#141210"); R(9.7,7.0,7.2,0.5,"#141210"); break;
+    case "ninja": R(9.7,6.5,7.3,1.0,"#241E16"); R(9.7,9.5,7.3,1.0,"#241E16"); R(8.9,6.7,0.8,2.6,"#241E16"); break;
+    case "astronaut": R(9.2,3.1,7.6,0.6,"#DCE2EC"); R(8.8,3.5,0.6,5.2,"#DCE2EC"); R(16.8,3.5,0.6,5.2,"#DCE2EC"); R(9.2,8.2,7.6,0.6,"#DCE2EC"); break;
+    case "cowboy": R(8.7,5.1,8.2,0.9,"#7A4E2A"); R(10.7,3.6,4.6,1.7,"#8C5A30"); R(10.7,4.9,4.6,0.5,"#5A3A1E"); break;
+    case "chef": R(10.3,2.4,5.8,2.4,"#F5F3EC"); R(9.9,1.9,2.0,1.0,"#F5F3EC"); R(12.0,1.6,2.0,1.0,"#F5F3EC"); R(10.5,4.5,5.4,0.9,"#EDEBE3"); break;
+    case "santa": R(9.5,4.3,6.8,1.4,"#C0392B"); R(9.3,5.6,7.1,0.7,"#F5F3EC"); R(8.7,4.1,1.2,1.2,"#F5F3EC"); R(15.7,3.5,1.1,1.1,"#C0392B"); break;
+    case "pumpkin": R(12.6,3.5,1.2,1.5,"#5F7A3A"); R(13.7,3.9,1.1,0.7,"#6E8C5C"); break;
+    case "galaxy": { const D=[[6,7],[9,9.2],[12,10],[7.2,10.6],[14,8.2],[15.5,10.4],[10.5,7.2]]; D.forEach((p,i)=>{ R(p[0],p[1],0.6,0.6, (Math.sin(T/300+i)*0.5+0.5)>0.4?"#FFFFFF":"#B9A9E0"); }); break; }
+    case "fire": { const f=Math.floor(T/90)%3; R(3.6,6.5-f*0.4,1.3,2.0+f*0.4,"#E0621E"); R(4.0,5.6-f*0.5,0.9,1.6,"#F2B23A"); R(5.4,7.0-f*0.3,1.0,1.6,"#E0621E"); break; }
   }
 }
 
@@ -709,13 +892,26 @@ const DIFFS = { easy:{m:8, mult:0.5}, normal:{m:6, mult:1}, hard:{m:4, mult:2} }
 let menuDiff = "normal";
 try{ menuDiff = localStorage.getItem("hangpig_diff") || "normal"; }catch(e){}
 
-let settings = { mv:1, sv:1, shake:true, parts:true };
+let settings = { mv:1, sv:1, shake:true, parts:true, theme:"auto" };
 try{ Object.assign(settings, JSON.parse(localStorage.getItem("hangpig_settings")||"{}")); }catch(e){}
 function saveSettings(){ try{ localStorage.setItem("hangpig_settings", JSON.stringify(settings)); }catch(e){} }
 function applyAudioSettings(){
   if(audio.musicVol) audio.musicVol.gain.value = settings.mv;
   if(audio.sfxGain) audio.sfxGain.gain.value = settings.sv;
 }
+function applyTheme(){
+  const t = settings.theme || "auto";
+  const el = document.documentElement;
+  if(t === "auto") el.removeAttribute("data-theme");
+  else el.setAttribute("data-theme", t);
+}
+function isDark(){
+  const t = settings.theme || "auto";
+  if(t === "dark") return true;
+  if(t === "light") return false;
+  return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+applyTheme();
 
 function addCoins(n){
   stats.coins = (stats.coins||0) + n;
@@ -842,12 +1038,12 @@ const sfx = {
     tone("triangle", vary(base*2), base*2, now(), 0.05, 0.03 + clamp(combo,0,10)*0.004);
   },
   bad(){ tone("square", vary(180), 110, now(), 0.22, 0.14); },
-  hint(){ tone("triangle", 520, 780, now(), 0.12, 0.12); },
+  hint(){ tone("triangle", 520, 780, now(), 0.12, 0.12); this.oink(1.05, 1); },
   hop(){ tone("triangle", vary(700), 1050, now(), 0.07, 0.08); },
   coin(){ tone("square", 988, 988, now(), 0.05, 0.08); tone("square", 1319, 1319, now()+0.05, 0.09, 0.08); },
   reveal(){ const t=now(); [660,880,1174].forEach((f,i)=> tone("triangle", f, f, t+i*0.07, 0.13, 0.09)); },
   juggleTick(){ tone("square", vary(340,0.08), 340, now(), 0.03, 0.05); },
-  snore(){ tone("sine", 140, 90, now(), 0.5, 0.04); },
+  snore(){ tone("sine", 140, 90, now(), 0.5, 0.04); tone("sawtooth", 150, 92, now(), 0.34, 0.03); },
   powerup(){ const t=now(); [523,659,880].forEach((f,i)=>tone("square",f,f,t+i*0.06,0.09,0.1)); },
   freezeUse(){ tone("square", 1400, 350, now(), 0.25, 0.1); tone("sine", 2100, 900, now(), 0.18, 0.05); },
   wallRise(){ tone("square", 90, 260, now(), 0.22, 0.14); },
@@ -858,14 +1054,24 @@ const sfx = {
     duck();
     const t = now(); const N = [523, 659, 784, 1047, 784, 1047];
     N.forEach((f,i)=> tone("square", f, f, t + i*0.08, 0.12, 0.11));
+    this.oink(1.35, 3);
   },
-  kick(){ duck(); tone("sine", 170, 40, now(), 0.28, 0.5); noise(now(), 0.1, 0.2, 400); },
+  kick(){ duck(); tone("sine", 170, 40, now(), 0.28, 0.5); noise(now(), 0.1, 0.2, 400); this.oink(0.62, 2); },
   whoosh(){ noise(now(), 0.35, 0.18, 900); },
   shatter(){
     duck();
     noise(now(), 0.5, 0.4, 2200);
     tone("square", 2400, 300, now(), 0.3, 0.1);
     tone("sine", 90, 35, now(), 0.4, 0.4);
+  },
+  oink(pm, n){
+    const base = 300 * (pm || 1), cnt = n || 1;
+    for(let i=0;i<cnt;i++){
+      const s = now() + i*0.12;
+      tone("sawtooth", base*0.75, base*1.2, s, 0.05, 0.09);
+      tone("sawtooth", base*1.2, base*0.55, s+0.045, 0.07, 0.08);
+      tone("square", base*0.5, base*0.5, s, 0.03, 0.02);
+    }
   },
 };
 
@@ -1648,6 +1854,14 @@ function newRound(forcedWord){
   state.wrongSet = new Set();
   state.misses = 0;
   state.hintsUsed = 0;
+  state.viUsed = false;
+  state.revUsed = false;
+  $("viHintLine").classList.add("hidden");
+  $("viHintLine").textContent = "";
+  /* EASY: free starting hint - first letter revealed */
+  if(state.mode !== "daily" && menuDiff === "easy" && !state.boss){
+    state.revealed.add(state.word[0]);
+  }
   state.dimmed = new Set();
   state.history = [];
   state.combo = 0;
@@ -1736,6 +1950,9 @@ function renderHint(){
   const b = $("hintBtn");
   b.disabled = state.over || state.locked || state.hintsUsed >= 2 || state.mode === "daily" || stats.coins < hintCost();
   b.textContent = state.hintsUsed >= 2 ? "50/50 · USED" : "50/50 (" + hintCost() + "\u00A2) · H";
+  const v = $("viBtn");
+  v.disabled = state.over || state.locked || state.viUsed || !VI_HINTS[state.word] || state.mode === "daily" || stats.coins < VI_COST;
+  v.textContent = state.viUsed ? "GỢI Ý VN · USED" : "GỢI Ý VN (" + VI_COST + "\u00A2) · 4";
 }
 function renderPU(){
   const defs = [
@@ -1781,7 +1998,7 @@ function handleWin(){
   if(state.misses === 0) unlock("perfect");
   if(state.misses === 5) unlock("comeback");
   if(state.streak >= 5) unlock("streak5");
-  if(state.hintsUsed === 0){
+  if(state.hintsUsed === 0 && !state.viUsed && !state.revUsed){
     stats.nohintStreak = (stats.nohintStreak || 0) + 1;
     if(stats.nohintStreak >= 3) unlock("nohint3");
   } else stats.nohintStreak = 0;
@@ -1790,7 +2007,7 @@ function handleWin(){
     stats.wins = (stats.wins||0) + 1;
     if(stats.missDist && stats.missDist[state.misses] !== undefined) stats.missDist[state.misses] += 1;
   }
-  let cGain = state.mode === "time" ? 6 : 4 + Math.max(0, state.maxM - state.misses) * 2;
+  let cGain = state.mode === "time" ? 9 : 6 + Math.max(0, state.maxM - state.misses) * 3;
   if(state.boss) cGain += 25;
   if(state.mode !== "time" && [5,10,15,20].indexOf(state.streak) !== -1){
     const mb = {5:15, 10:30, 15:50, 20:80}[state.streak];
@@ -1832,6 +2049,7 @@ function guess(L){
     awardPts(pts);
     state.combo += 1;
     sfx.good(state.combo);
+    sfx.oink(1.15 + Math.min(state.combo,6)*0.06, 1);
     flyLetter(L, keyEl, true);
     pigReact("hop", 420);
     sfx.hop();
@@ -1888,6 +2106,7 @@ function guess(L){
     state.history.push(0);
     state.combo = 0;
     sfx.bad();
+    sfx.oink(0.7, 1);
     if(state.mode === "time"){
       ta.left -= 4;
       const cc = center($("sceneWrap"));
@@ -1960,6 +2179,43 @@ function useHint(){
   const wr = center($("wordRow"));
   floatText(wr.x, wr.y - 8, "50/50!", "#6A9BB3", 16);
   renderAll();
+}
+
+const VI_COST = 100, REV_COST = 60;
+function useViHint(){
+  if(state.locked || state.over || state.viUsed || state.screen !== "game") return;
+  if(state.mode === "daily") return;
+  if(stats.coins < VI_COST) return;
+  if(!VI_HINTS[state.word]) return;
+  ensureAudio();
+  wake();
+  stats.coins -= VI_COST;
+  saveStats(); updateCoinHud();
+  state.viUsed = true;
+  sfx.hint();
+  const el = $("viHintLine");
+  el.textContent = VI_HINTS[state.word];
+  el.classList.remove("hidden");
+  renderAll();
+}
+function useRevealLetter(){
+  if(state.locked || state.over || state.revUsed || state.screen !== "game") return;
+  if(state.mode === "daily") return;
+  if(stats.coins < REV_COST) return;
+  const hidden = [...new Set(state.word.split(""))].filter(L => !state.revealed.has(L));
+  if(!hidden.length) return;
+  ensureAudio();
+  wake();
+  stats.coins -= REV_COST;
+  saveStats(); updateCoinHud();
+  state.revUsed = true;
+  const L = hidden[Math.floor(Math.random()*hidden.length)];
+  state.revealed.add(L);
+  sfx.hint();
+  const wr = center($("wordRow"));
+  floatText(wr.x, wr.y - 8, "LỘ CHỮ: " + L, "#C9A227", 18);
+  renderAll();
+  if(wordSolved()) handleWin();
 }
 
 /* ---------------- POWER-UPS ---------------- */
@@ -2092,7 +2348,10 @@ document.addEventListener("keydown", e=>{
   }
   if(state.screen === "runner"){
     if(e.key === " " || K === "ARROWUP" || K === "ENTER"){ e.preventDefault(); runJump(); run._jHold = true; }
-    if(K === "ARROWDOWN" || K === "S"){ e.preventDefault(); run.duck = true; }
+    if(K === "ARROWDOWN" || K === "S"){
+      e.preventDefault(); run.duck = true;
+      if(run.y < 0){ run._fast = true; run._jHold = false; } /* fast-drop mid-air */
+    }
     return;
   }
   if(K === "ENTER"){
@@ -2107,6 +2366,7 @@ document.addEventListener("keydown", e=>{
   if(K === "1"){ buyPU("freeze"); return; }
   if(K === "2"){ buyPU("vowels"); return; }
   if(K === "3"){ buyPU("wall"); return; }
+  if(K === "4"){ useViHint(); return; }
   if(K.length === 1 && K >= "A" && K <= "Z"){ guess(K); }
 });
 document.addEventListener("pointerdown", ()=>{ ensureAudio(); if(state.screen==="game") wake(); });
@@ -2114,6 +2374,7 @@ document.addEventListener("pointerdown", ()=>{ ensureAudio(); if(state.screen===
 $("backBtn").onclick = ()=>{ if(!(seq.active && !seq.done) && !(winSeq.active && winSeq.phase !== "done")) backToMenu(); };
 $("muteBtn").onclick = toggleMute;
 $("hintBtn").onclick = useHint;
+$("viBtn").onclick = useViHint;
 $("puFreeze").onclick = ()=> buyPU("freeze");
 $("puVowels").onclick = ()=> buyPU("vowels");
 $("puWall").onclick = ()=> buyPU("wall");
@@ -2165,7 +2426,7 @@ function startRunner(){
 }
 function resetRun(){
   run.active = true; run.over = false; run.started = false;
-  run.y = 0; run.vy = 0; run.dist = 0; run.score = 0; run.speed = 3.4; run.duck = false; run._jHold = false;
+  run.y = 0; run.vy = 0; run.dist = 0; run.score = 0; run.speed = 3.4; run.duck = false; run._jHold = false; run._fast = false; run._lt = 0; run._fr = 1;
   run.obs = []; run.nextIn = 140; run.milestone = 0;
   run.coins = []; run.got = 0; run.nextCoinIn = 420;
   $("runCoins").textContent = "0";
@@ -2184,7 +2445,7 @@ function runJump(){
   ensureAudio();
   if(run.over){ resetRun(); return; }
   run.started = true;
-  if(run.y === 0){ run.vy = -13.8; sfx.hop(); }
+  if(run.y === 0){ run.vy = -11.6; run._fast = false; sfx.hop(); }
 }
 function runHit(){
   if(run.over) return;
@@ -2223,38 +2484,45 @@ function spawnObs(){
          run.obs.push({type:"post", x:RUN.W+40, w:10, h:30}); }
 }
 function updateRun(){
-  if(!run.active || run.over || !run.started) return;
-  const gJ = (run._jHold && run.y < 0) ? (run.vy < 0 ? 0.58 : 0.44) : 0.60;
-  run.vy += gJ; run.y += run.vy;
-  if(run.y > 0){ run.y = 0; run.vy = 0; }
+  if(!run.active || run.over || !run.started){ run._lt = 0; return; }
+  const _now = performance.now();
+  let fr = run._lt ? (_now - run._lt) / 16.667 : 1;
+  run._lt = _now;
+  if(fr > 3) fr = 3; else if(fr < 0.25) fr = 0.25;
+  run._fr = fr;
+  /* dino-style: floaty jump, fast-drop when duck pressed mid-air */
+  let gJ;
+  if(run._fast && run.y < 0){ gJ = 2.4; }
+  else if(run._jHold && run.y < 0){ gJ = run.vy < 0 ? 0.40 : 0.36; }
+  else { gJ = 0.55; }
+  run.vy += gJ * fr; run.y += run.vy * fr;
+  if(run.y > 0){ run.y = 0; run.vy = 0; run._fast = false; }
   const spTarget = Math.min(9.5, 3.4 + Math.floor(run.score/500)*0.9);
-  run.speed += (spTarget - run.speed) * 0.02;
-  run.dist += run.speed;
+  run.speed += (spTarget - run.speed) * 0.02 * fr;
+  run.dist += run.speed * fr;
   const sc = Math.floor(run.dist/12);
   if(sc !== run.score){
     run.score = sc;
     $("runScore").textContent = String(sc).padStart(5,"0");
     if(sc > 0 && sc % 100 === 0 && sc !== run.milestone){ run.milestone = sc; sfx.good(4); }
   }
-  run.nextIn -= run.speed;
+  run.nextIn -= run.speed * fr;
   if(run.nextIn <= 0){
     if(run.coins.some(c => c.x > RUN.W - 90)){ run.nextIn = 90; }
     else { spawnObs(); run.nextIn = 400 + Math.random()*320; }
   }
-  run.nextCoinIn -= run.speed;
+  run.nextCoinIn -= run.speed * fr;
   if(run.nextCoinIn <= 0){
     if(run.obs.some(o => o.x + o.w > RUN.W - 60)){ run.nextCoinIn = 100; }
     else {
       run.nextCoinIn = 560 + Math.random()*620;
-      const n = 4 + Math.floor(Math.random()*2);
-      const arc = Math.random() < 0.6;
-      const peak = 58 + Math.random()*18;
+      const n = 4;
+      const yy = RUN.groundY - 84;
       for(let i=0;i<n;i++){
-        const yy = RUN.groundY - 26 - (arc ? Math.round(Math.sin(Math.PI*i/(n-1))*peak) : 0);
         run.coins.push({x: RUN.W + 30 + i*26, y: yy});
       }
       const span = (n-1)*26;
-      if(run.nextIn < span + 140) run.nextIn = span + 140 + Math.random()*80;
+      if(run.nextIn < span + 160) run.nextIn = span + 160 + Math.random()*80;
     }
   }
   const gy = RUN.groundY;
@@ -2263,7 +2531,7 @@ function updateRun(){
   const pTop = gy + run.y - duckH;
   const pBot = gy + run.y;
   for(const o of run.obs){
-    o.x -= run.speed;
+    o.x -= run.speed * fr;
     const flying = o.y !== undefined;
     const oTop = flying ? o.y : gy - o.h;
     const oBot = flying ? o.y + o.h : gy;
@@ -2271,7 +2539,7 @@ function updateRun(){
     if(pr > o.x && pl < o.x + o.w && pBot > oTop + pad && pTop < oBot - pad){ runHit(); }
   }
   for(const c of run.coins){
-    c.x -= run.speed;
+    c.x -= run.speed * fr;
     if(!c.got && pr > c.x && pl < c.x + 12 && pBot > c.y - 2 && pTop < c.y + 12){
       c.got = true;
       run.got += 1;
@@ -2285,7 +2553,7 @@ function updateRun(){
 function drawRunner(t){
   const g = rctx;
   const gy = RUN.groundY;
-  const night = Math.floor(run.score/300) % 2 === 1;
+  const night = isDark() ? true : (Math.floor(run.score/300) % 2 === 1);
   const BGC = night ? "#2A2724" : "#FAF9F5";
   const INK = night ? "#F0EEE6" : "#3D3929";
   const CLD = night ? "#4A453D" : "#D9D5C8";
@@ -2301,7 +2569,7 @@ function drawRunner(t){
   g.fillStyle = CLD;
   for(const c of run.clouds){
     g.fillRect(c.x, c.y, 34, 8); g.fillRect(c.x+8, c.y-6, 20, 8);
-    if(run.started && !run.over){ c.x -= run.speed*0.25; }
+    if(run.started && !run.over){ c.x -= run.speed*0.25*(run._fr||1); }
     if(c.x < -60){ c.x = RUN.W + 30; c.y = 20 + Math.random()*60; }
   }
   g.strokeStyle = INK; g.lineWidth = 2;
@@ -2404,7 +2672,7 @@ function endTA(){
   if(state.score > (stats.taBest || 0)) stats.taBest = state.score;
   if(ta.words > (stats.taBestWords || 0)) stats.taBestWords = ta.words;
   saveStats();
-  addCoins(ta.words * 2);
+  addCoins(ta.words * 3);
   sfx.win();
   showPanel("TIME'S UP!", "win",
     ta.words + " WORDS · " + state.score + " PTS · BEST " + stats.taBest, [
@@ -2454,36 +2722,48 @@ function showBadges(){
   $("metaModal").classList.remove("hidden");
 }
 function showSkins(){
-  $("metaTitle").innerHTML = "SKINS &middot; <span>" + stats.totalPts + " PTS EARNED</span>";
+  const owned = SKINS.filter(s=>ownedSkins[s.id]).length;
+  $("metaTitle").innerHTML = "SKIN SHOP &middot; <span>" + owned + "/" + SKINS.length + "</span>";
   const body = $("metaBody");
-  body.innerHTML = "";
-  body.className = "skinList";
+  body.className = "skinGrid";
+  body.innerHTML = "<div class='skinBal'>YOUR COINS: <b>" + (stats.coins||0) + "\u00A2</b></div>";
+  const grid = document.createElement("div");
+  grid.className = "skinCards";
   SKINS.forEach(s=>{
+    const isOwned = !!ownedSkins[s.id], isOn = skin === s.id, afford = (stats.coins||0) >= s.need;
     const d = document.createElement("div");
-    d.className = "skinCard";
+    d.className = "skinCard t-" + s.id + (isOn ? " on" : "") + (isOwned ? " owned" : " locked");
     const cv = document.createElement("canvas");
-    cv.width = 116; cv.height = 74; cv.className = "skinPrev";
+    cv.width = 128; cv.height = 84; cv.className = "skinPrev";
     d.appendChild(cv);
-    const info = document.createElement("div");
-    info.className = "skinInfo";
-    info.innerHTML = "<b>" + s.name + "</b><small>" + (s.need ? s.need + " TOTAL PTS" : "DEFAULT") + "</small>";
-    d.appendChild(info);
-    const canUse = stats.totalPts >= s.need;
+    const tier = document.createElement("span");
+    tier.className = "skinTier tr-" + s.tier; tier.textContent = s.tier;
+    d.appendChild(tier);
+    const nm = document.createElement("b"); nm.className = "skinName"; nm.textContent = s.name;
+    d.appendChild(nm);
     const btn = document.createElement("button");
-    btn.className = "pbtn " + (skin === s.id ? "primary" : "ghost");
-    btn.textContent = skin === s.id ? "SELECTED" : (canUse ? "SELECT" : "LOCKED");
-    btn.disabled = !canUse;
-    btn.onclick = ()=>{
-      if(!canUse) return;
-      skin = s.id;
-      try{ localStorage.setItem("hangpig_skin", skin); }catch(e){}
-      sfx.powerup();
-      showSkins();
-    };
+    if(isOwned){
+      btn.className = "skBtn " + (isOn ? "on" : "sel");
+      btn.innerHTML = isOn ? "\u2713 WEARING" : "WEAR";
+      btn.onclick = ()=>{ skin = s.id; try{ localStorage.setItem("hangpig_skin", skin); }catch(e){} sfx.powerup(); showSkins(); };
+    } else {
+      btn.className = "skBtn buy" + (afford ? "" : " no");
+      btn.innerHTML = "BUY &middot; " + s.need + "\u00A2";
+      btn.disabled = !afford;
+      btn.onclick = ()=>{
+        if((stats.coins||0) < s.need) return;
+        stats.coins -= s.need; saveStats(); updateCoinHud();
+        ownedSkins[s.id] = true; saveOwnedSkins();
+        skin = s.id; try{ localStorage.setItem("hangpig_skin", skin); }catch(e){}
+        sfx.win();
+        showSkins();
+      };
+    }
     d.appendChild(btn);
-    body.appendChild(d);
+    grid.appendChild(d);
     renderSkinPreview(cv, s.id);
   });
+  body.appendChild(grid);
   $("metaModal").classList.remove("hidden");
 }
 function renderSkinPreview(cv, id){
@@ -2749,11 +3029,14 @@ function showSettings(){
     + "<label class='setRow'>SFX <input type='range' id='setSv' min='0' max='100' value='" + Math.round(settings.sv*100) + "'></label>"
     + "<label class='setRow'><input type='checkbox' id='setShake'" + (settings.shake ? " checked" : "") + "> SCREEN SHAKE</label>"
     + "<label class='setRow'><input type='checkbox' id='setParts'" + (settings.parts ? " checked" : "") + "> PARTICLES &amp; FLASHES</label>"
+    + "<label class='setRow'>THEME <select id='setTheme'><option value='auto'>AUTO</option><option value='light'>LIGHT</option><option value='dark'>DARK</option></select></label>"
     + "<button class='pbtn ghost' id='setReset'>RESET ALL DATA</button>";
   $("setMv").oninput = e=>{ settings.mv = e.target.value/100; applyAudioSettings(); saveSettings(); };
   $("setSv").oninput = e=>{ settings.sv = e.target.value/100; applyAudioSettings(); saveSettings(); sfx.click(); };
   $("setShake").onchange = e=>{ settings.shake = e.target.checked; saveSettings(); };
   $("setParts").onchange = e=>{ settings.parts = e.target.checked; saveSettings(); };
+  $("setTheme").value = settings.theme || "auto";
+  $("setTheme").onchange = e=>{ settings.theme = e.target.value; applyTheme(); saveSettings(); };
   let armed2 = false;
   $("setReset").onclick = ()=>{
     if(!armed2){ armed2 = true; $("setReset").textContent = "SURE? TAP AGAIN"; return; }
@@ -2772,11 +3055,20 @@ buildKeyboard();
 renderBest();
 $("menuPigWrap").onclick = startRunner;
 $("runBack").onclick = exitRunner;
+$("scene").addEventListener("pointerdown", ()=>{
+  if(state.screen !== "game" || state.over || state.locked || seq.active || winSeq.active) return;
+  ensureAudio(); wake();
+  pigReact("hop", 500);
+  sfx.oink(1.28 + Math.random()*0.2, 1);
+  const r = $("scene").getBoundingClientRect();
+  if(r.width) floatText(r.left + r.width*(0.35+Math.random()*0.3), r.top + r.height*0.4, ["\u2665","!","oink!"][Math.floor(Math.random()*3)], "#E08A6B", 22);
+});
 runCv.addEventListener("pointerdown", (e)=>{
   e.preventDefault();
   const r = runCv.getBoundingClientRect();
   if(r.height && (e.clientY - r.top) > r.height*0.68 && run.started && !run.over){
     run.duck = true; run._duckHold = true;
+    if(run.y < 0){ run._fast = true; run._jHold = false; }
     clearTimeout(run._duckT);
     run._duckT = setTimeout(()=>{ run.duck = false; run._duckHold = false; }, 1500);
   } else { runJump(); run._jHold = true; }
@@ -2791,7 +3083,10 @@ const padJ = $("padJump"), padD = $("padDuck");
 padJ.addEventListener("pointerdown", (e)=>{ e.preventDefault(); runJump(); run._jHold = true; });
 padD.addEventListener("pointerdown", (e)=>{
   e.preventDefault();
-  if(run.started && !run.over) run.duck = true;
+  if(run.started && !run.over){
+    run.duck = true;
+    if(run.y < 0){ run._fast = true; run._jHold = false; }
+  }
 });
 ["pointerup","pointercancel","pointerleave"].forEach(ev=>{
   padJ.addEventListener(ev, ()=>{ run._jHold = false; });
@@ -2835,7 +3130,7 @@ renderDailyBtn();
 updateCoinHud();
 
 /* debug/test hook */
-window.__hp = { state, guess, useHint, buyPU, newRound, seq, winSeq, pigFx, run, updateRun, startRunner, exitRunner, runJump, resetRun, showWords, closeWords, ta, stats, settings, unlock, openDuel, duelBegin, showBadges, showSkins, showStats, showSettings, closeMeta, endTA, startDaily, dailyWord, dailyIndex, shareTextLive, copyShare, addCoins, hintCost, DIFFS, setDiff:(d)=>{ menuDiff = d; }, get menuDiff(){ return menuDiff; }, get badges(){ return ownedBadges; }, get skin(){ return skin; }, get sleeping(){ return sleeping; } };
+window.__hp = { state, guess, useHint, buyPU, newRound, seq, winSeq, pigFx, run, updateRun, startRunner, exitRunner, runJump, resetRun, showWords, closeWords, ta, stats, settings, unlock, openDuel, duelBegin, showBadges, showSkins, showStats, showSettings, closeMeta, endTA, startDaily, dailyWord, dailyIndex, shareTextLive, copyShare, addCoins, hintCost, DIFFS, setDiff:(d)=>{ menuDiff = d; }, get menuDiff(){ return menuDiff; }, get badges(){ return ownedBadges; }, get skin(){ return skin; }, get sleeping(){ return sleeping; }, get ownedSkins(){ return ownedSkins; }, SKINS };
 </script>
 <script>
 if("serviceWorker" in navigator && location.protocol === "https:"){
