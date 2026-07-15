@@ -523,7 +523,7 @@
       <button class="metaBtn" id="statsBtn">STATS</button>
       <button class="metaBtn" id="settingsBtn">SETTINGS</button>
     </div>
-    <div id="menuFooter">6 misses and the pig loses its patience. &mdash; v5.17</div>
+    <div id="menuFooter">6 misses and the pig loses its patience. &mdash; v5.18</div>
   </div>
 
   <!-- GAME -->
@@ -622,7 +622,7 @@
 <script>
 'use strict';
 /* =========================================================
-   HANGPIG v5.17 - Guess or Get Kicked
+   HANGPIG v5.18 - Guess or Get Kicked
    Juice pass: squash & stretch, hitstop, rotational shake,
    particles, streak-pitched audio, escalating celebration.
    New mechanics: power-ups (FREEZE / VOWELS / WALL),
@@ -976,26 +976,65 @@ Object.keys(CHAR_POSE_SRC).forEach(id=>{ CHAR_POSE[id]={}; Object.keys(CHAR_POSE
 function charPose(kicking){ if(sleeping) return "sleep"; if(pigFx.type==="hop"||winSeq.active) return "happy"; if(pigFx.type==="flinch"||kicking) return "sad"; return "idle"; }
 function poseImg(id,name){ const P=CHAR_POSE[id]; if(!P) return null; let im=P[name]; if(!(im&&im.complete&&im.naturalWidth)) im=P.idle; return (im&&im.complete&&im.naturalWidth)?im:null; }
 const CHAR_SKIN_DEFS = [
-  {id:"orig", name:"CLASSIC", filter:"none", price:0},
-  {id:"azure", name:"AZURE", filter:"hue-rotate(165deg) saturate(1.15)", price:400},
-  {id:"grape", name:"GRAPE", filter:"hue-rotate(275deg) saturate(1.1)", price:700},
-  {id:"mint", name:"MINT", filter:"hue-rotate(95deg) saturate(1.2)", price:1000}
+  {id:"orig", name:"CLASSIC", hue:0, sat:1, price:0},
+  {id:"azure", name:"AZURE", hue:165, sat:1.15, price:400},
+  {id:"grape", name:"GRAPE", hue:275, sat:1.1, price:700},
+  {id:"mint", name:"MINT", hue:95, sat:1.2, price:1000}
 ];
 let charSkinSel = {}, ownedCharSkins = {};
 try{ charSkinSel = JSON.parse(localStorage.getItem("hangpig_char_skins")||"{}")||{}; }catch(e){}
 try{ ownedCharSkins = JSON.parse(localStorage.getItem("hangpig_owned_cskins")||"{}")||{}; }catch(e){}
 function saveCharSkins(){ try{ localStorage.setItem("hangpig_char_skins", JSON.stringify(charSkinSel)); }catch(e){} }
 function saveOwnedCSkins(){ try{ localStorage.setItem("hangpig_owned_cskins", JSON.stringify(ownedCharSkins)); }catch(e){} }
-function skinFilter(id){ const d = CHAR_SKIN_DEFS.find(x=>x.id===(charSkinSel[id]||"orig")); return d ? d.filter : "none"; }
+/* iOS Safari lacks canvas 2D ctx.filter -> recolor pixels manually (HSL hue-rotate), cache result */
+const SKIN_CACHE = {};
+function hslRecolor(img, hue, sat){
+  const w = img.naturalWidth||img.width, h = img.naturalHeight||img.height;
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const cx = cv.getContext("2d"); if(!cx) return img;
+  cx.imageSmoothingEnabled = false; cx.drawImage(img, 0, 0, w, h);
+  let dat; try{ dat = cx.getImageData(0,0,w,h); }catch(e){ return img; }
+  const d = dat.data;
+  const hu = ((hue||0)/360);
+  for(let i=0;i<d.length;i+=4){
+    if(d[i+3]===0) continue;
+    let r=d[i]/255, g=d[i+1]/255, b=d[i+2]/255;
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let hh, ss, ll=(mx+mn)/2;
+    if(mx===mn){ hh=0; ss=0; }
+    else{ const dd=mx-mn; ss = ll>0.5 ? dd/(2-mx-mn) : dd/(mx+mn);
+      if(mx===r) hh=(g-b)/dd+(g<b?6:0); else if(mx===g) hh=(b-r)/dd+2; else hh=(r-g)/dd+4; hh/=6; }
+    hh=(hh+hu)%1; if(hh<0) hh+=1;
+    ss=Math.min(1, ss*(sat==null?1:sat));
+    let R,G,B;
+    if(ss===0){ R=G=B=ll; }
+    else{ const q = ll<0.5 ? ll*(1+ss) : ll+ss-ll*ss; const p=2*ll-q;
+      const h2=(p,q,t)=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+      R=h2(p,q,hh+1/3); G=h2(p,q,hh); B=h2(p,q,hh-1/3); }
+    d[i]=Math.round(R*255); d[i+1]=Math.round(G*255); d[i+2]=Math.round(B*255);
+  }
+  cx.putImageData(dat,0,0);
+  return cv;
+}
+function skinnedImg(charId, poseName, skinId){
+  const sk = skinId || charSkinSel[charId] || "orig";
+  const im = poseImg(charId, poseName); if(!im) return null;
+  const def = CHAR_SKIN_DEFS.find(x=>x.id===sk);
+  if(!def || (!def.hue && (def.sat==null||def.sat===1))) return im;
+  const key = charId+":"+poseName+":"+sk;
+  if(SKIN_CACHE[key]) return SKIN_CACHE[key];
+  const out = hslRecolor(im, def.hue||0, def.sat==null?1:def.sat);
+  SKIN_CACHE[key] = out;
+  return out;
+}
+function skinFilter(){ return "none"; }
 function renderSkinSwatch(cv, charId, skinId){
   const c = cv.getContext("2d"); if(!c) return;
   c.clearRect(0,0,cv.width,cv.height);
   const im = poseImg(charId, "idle"); if(!im) return;
-  const d = CHAR_SKIN_DEFS.find(x=>x.id===skinId);
-  c.imageSmoothingEnabled = false; c.filter = d ? d.filter : "none";
+  const src = skinnedImg(charId, "idle", skinId) || im;
+  c.imageSmoothingEnabled = false;
   const ih = 26, iw = ih*(im.naturalWidth/im.naturalHeight);
-  c.drawImage(im, (cv.width-iw)/2, (cv.height-ih)/2, iw, ih);
-  c.filter = "none";
+  c.drawImage(src, (cv.width-iw)/2, (cv.height-ih)/2, iw, ih);
 }
 const CHAR_LIST = [
   {id:"pig",tier:"STARTER",free:true},
@@ -1566,11 +1605,13 @@ function drawPig(ctx, x, y, s, t, kicking){
 
   const _P = CHAR_POSE[character];
   if(_P && _P.idle && _P.idle.complete && _P.idle.naturalWidth){
-    const _im = poseImg(character, charPose(kicking));
+    const _pose = charPose(kicking);
+    const _im = poseImg(character, _pose);
+    const _src = skinnedImg(character, _pose) || _im;
     const _scl = (15*sy)/_P.idle.naturalHeight;
     const _iw = _im.naturalWidth*_scl, _ih = _im.naturalHeight*_scl;
-    ctx.save(); ctx.imageSmoothingEnabled = false; ctx.filter = skinFilter(character); if(_cd.alpha!=null) ctx.globalAlpha = _cd.alpha;
-    ctx.drawImage(_im, xx + 11*sx - _iw/2, yy + 14*s - _ih, _iw, _ih);
+    ctx.save(); ctx.imageSmoothingEnabled = false; if(_cd.alpha!=null) ctx.globalAlpha = _cd.alpha;
+    ctx.drawImage(_src, xx + 11*sx - _iw/2, yy + 14*s - _ih, _iw, _ih);
     ctx.restore();
   } else {
     if(_cd.alpha != null){ ctx.save(); ctx.globalAlpha = _cd.alpha; }
@@ -2929,12 +2970,14 @@ function drawRunner(t){
   const _rcd = charDef();
   const _rP = CHAR_POSE[character];
   if(_rP && _rP.idle && _rP.idle.complete && _rP.idle.naturalWidth){
-    const _rim = poseImg(character, run.over ? "sad" : "idle");
+    const _rpose = run.over ? "sad" : "idle";
+    const _rim = poseImg(character, _rpose);
+    const _rsrc = skinnedImg(character, _rpose) || _rim;
     const _rscl = (15*sy)/_rP.idle.naturalHeight;
     const _riw = _rim.naturalWidth*_rscl, _rih = _rim.naturalHeight*_rscl;
     const _rbob = (gallop && run.y === 0) ? Math.abs(Math.sin(t/90))*3 : 0;
-    g.save(); g.imageSmoothingEnabled = false; g.filter = skinFilter(character); if(_rcd.alpha!=null) g.globalAlpha = _rcd.alpha;
-    g.drawImage(_rim, RUN.pigX + 11*sx - _riw/2, gy + run.y - _rih - _rbob, _riw, _rih);
+    g.save(); g.imageSmoothingEnabled = false; if(_rcd.alpha!=null) g.globalAlpha = _rcd.alpha;
+    g.drawImage(_rsrc, RUN.pigX + 11*sx - _riw/2, gy + run.y - _rih - _rbob, _riw, _rih);
     g.restore();
   } else {
     if(_rcd.alpha != null){ g.save(); g.globalAlpha = _rcd.alpha; }
@@ -3199,10 +3242,10 @@ function renderCharPreview(cv, id){
   c.fillStyle = "#262421"; c.fillRect(0,0,cv.width,cv.height);
   const im = poseImg(id, "idle");
   if(im){
-    c.imageSmoothingEnabled = false; c.filter = skinFilter(id);
+    const src = skinnedImg(id, "idle") || im;
+    c.imageSmoothingEnabled = false;
     const ih = 66, iw = ih*(im.naturalWidth/im.naturalHeight);
-    c.drawImage(im, (cv.width-iw)/2, (cv.height-ih)/2, iw, ih);
-    c.filter = "none";
+    c.drawImage(src, (cv.width-iw)/2, (cv.height-ih)/2, iw, ih);
     return;
   }
   const def = CHARS[id]; if(!def) return;
@@ -3577,7 +3620,7 @@ updateCoinHud();
 try{ updateMetaBadges(); }catch(e){}
 
 /* debug/test hook */
-window.__hp = { state, guess, useHint, buyPU, newRound, seq, winSeq, pigFx, run, updateRun, startRunner, exitRunner, runJump, resetRun, showWords, closeWords, ta, stats, settings, unlock, openDuel, duelBegin, showBadges, showSkins, showStats, showSettings, closeMeta, endTA, startDaily, dailyWord, dailyIndex, shareTextLive, copyShare, addCoins, hintCost, DIFFS, setDiff:(d)=>{ menuDiff = d; }, get menuDiff(){ return menuDiff; }, get badges(){ return ownedBadges; }, get skin(){ return skin; }, get sleeping(){ return sleeping; }, get ownedSkins(){ return ownedSkins; }, SKINS, get character(){ return character; }, setChar:(c)=>{ character = c; }, get ownedChars(){ return ownedChars; }, CHARS, CHAR_LIST, showCharShop, checkCharUnlocks, CHAR_POSE, poseImg, charPose, RUNPERK, runPerk, CHAR_SKIN_DEFS, skinFilter, get charSkinSel(){return charSkinSel;}, get ownedCharSkins(){return ownedCharSkins;}, ACHS, achLevel, achReady, achAnyReady, claimAch, showAch, updateMetaBadges, get achClaimed(){return achClaimed;} };
+window.__hp = { state, guess, useHint, buyPU, newRound, seq, winSeq, pigFx, run, updateRun, startRunner, exitRunner, runJump, resetRun, showWords, closeWords, ta, stats, settings, unlock, openDuel, duelBegin, showBadges, showSkins, showStats, showSettings, closeMeta, endTA, startDaily, dailyWord, dailyIndex, shareTextLive, copyShare, addCoins, hintCost, DIFFS, setDiff:(d)=>{ menuDiff = d; }, get menuDiff(){ return menuDiff; }, get badges(){ return ownedBadges; }, get skin(){ return skin; }, get sleeping(){ return sleeping; }, get ownedSkins(){ return ownedSkins; }, SKINS, get character(){ return character; }, setChar:(c)=>{ character = c; }, get ownedChars(){ return ownedChars; }, CHARS, CHAR_LIST, showCharShop, checkCharUnlocks, CHAR_POSE, poseImg, charPose, RUNPERK, runPerk, CHAR_SKIN_DEFS, skinnedImg, get charSkinSel(){return charSkinSel;}, get ownedCharSkins(){return ownedCharSkins;}, ACHS, achLevel, achReady, achAnyReady, claimAch, showAch, updateMetaBadges, get achClaimed(){return achClaimed;} };
 </script>
 <script>
 if("serviceWorker" in navigator && location.protocol === "https:"){
