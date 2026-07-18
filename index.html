@@ -1195,6 +1195,24 @@
   }
   .dpSkill:not(:disabled){border-color:#B45AFF; box-shadow:0 0 8px rgba(180,90,255,.55); animation:armedPulse 1s infinite;}
   .dpSkill:disabled{opacity:.35; cursor:default;}
+  /* v5.51: cooldown badge + trang thai hoi chieu */
+  .dpSkill{position:relative;}
+  .dpSkill i{
+    position:absolute; right:-5px; top:-7px; font-style:normal; font-size:10px; font-weight:bold;
+    background:var(--bad); color:#fff; border-radius:999px; padding:1px 4px; display:none; line-height:1.2;
+  }
+  .dpSkill.cding{filter:grayscale(.85); opacity:.45 !important; animation:none;}
+  .dpSkill.cding i{display:block;}
+  /* v5.51: giap bao ve - vien xanh phat sang quanh nua san */
+  .dpShieldGlow{
+    position:absolute; inset:4px; z-index:2; pointer-events:none; border-radius:11px;
+    border:2.5px solid rgba(110,195,235,.9);
+    box-shadow:0 0 18px 4px rgba(90,180,220,.55), inset 0 0 20px 5px rgba(90,180,220,.3);
+    animation:shieldPulse .9s ease-in-out infinite;
+  }
+  @keyframes shieldPulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+  /* v5.51: chu vang */
+  .dpSlot.gold{color:var(--gold); border-bottom-color:var(--gold); text-shadow:0 0 9px rgba(201,162,39,.85); animation:goldPop .5s var(--spring);}
   /* hieu ung bi pha roi */
   .dpKbWrap{position:relative; display:flex; flex-direction:column; gap:4px; align-items:center;}
   .dpFreeze{
@@ -3730,6 +3748,7 @@ function loop(realT){
     drawRunner(t);
   } else if(state.screen === "duel2"){
     drawDuelRef(t); /* v5.50: trong tai o vach chia */
+    duel2SkillTick(); /* v5.51: cooldown + giap het han */
   } else {
     if(seq.active) updateKick(t);
     if(winSeq.active) updateWinSeq(t);
@@ -5941,9 +5960,10 @@ function duelStart2(w1, w2){
   state.screen = "duel2"; /* nhac duel + loop nhe */
   state.mode = "duel";
   duel2.active = true; duel2.over = false; duel2.tug = 0;
+  const pickGold = wd => { const u = [...new Set(wd.split(""))]; return u[Math.floor(Math.random()*u.length)]; }; /* v5.51: chu vang an */
   duel2.p = [
-    { word:w2, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"", en:0, frozenUntil:0, shufUntil:0, shufOrder:null, inkUntil:0 },
-    { word:w1, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"", en:0, frozenUntil:0, shufUntil:0, shufOrder:null, inkUntil:0 },
+    { word:w2, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"", en:0, frozenUntil:0, shufUntil:0, shufOrder:null, inkUntil:0, shieldUntil:0, cd:{}, gold:pickGold(w2), goldHit:false },
+    { word:w1, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"", en:0, frozenUntil:0, shufUntil:0, shufOrder:null, inkUntil:0, shieldUntil:0, cd:{}, gold:pickGold(w1), goldHit:false },
   ];
   /* v5.49: CUOC XU - tru moi nguoi wager (chung vi tren 1 may), thang an tron pot */
   duel2.pot = (duel2.wager || 0) * 2;
@@ -5975,8 +5995,22 @@ function duel2Guess(pi, L){
   const dir = pi === 0 ? 1 : -1; /* dp1 no ra khi P1 danh tot */
   if(P.word.includes(L)){
     P.rev.add(L);
-    P.en = Math.min(DUEL_EN_MAX, (P.en || 0) + 1); /* v5.49: tich nang luong */
-    duel2.tug = Math.max(-0.35, Math.min(0.35, duel2.tug + 0.05 * dir)); /* v5.49: don ep doi thu 5% */
+    /* v5.51: CHU VANG may man - trung thi x2 nang luong + day vach 12% + no vang */
+    let enGain = 1, tugGain = 0.05;
+    if(L === P.gold && !P.goldHit){
+      P.goldHit = true;
+      enGain = 2; tugGain = 0.12;
+      try{
+        sfx.win(); vib([30,40,60]);
+        const pr = $("dp" + (pi + 1)).getBoundingClientRect();
+        floatText(pr.left + pr.width/2, pr.top + pr.height*0.3, "🌟 CHỮ VÀNG!", "#C9A227", 22);
+        slotSparkle(pr.left + pr.width/2, pr.top + pr.height*0.3);
+        burst(pr.left + pr.width/2, pr.top + pr.height*0.3, {count:14, spread:110, size:7, colors:["#E7C24A","#FFF6C9","#C9A227"]});
+        flashScreen("rgba(201,162,39,.2)");
+      }catch(e){}
+    }
+    P.en = Math.min(DUEL_EN_MAX, (P.en || 0) + enGain); /* v5.49: tich nang luong */
+    duel2.tug = Math.max(-0.35, Math.min(0.35, duel2.tug + tugGain * dir)); /* v5.49: don ep doi thu */
     try{ sfx.good(2, 0); }catch(e){}
     try{ duelRefReact("cheer", pi); }catch(e){} /* v5.50: trong tai co vu */
     if([...new Set(P.word.split(""))].every(ch => P.rev.has(ch))){ duel2End(pi); return; }
@@ -5990,13 +6024,41 @@ function duel2Guess(pi, L){
   duel2ApplyTug();
   renderDuel2();
 }
-/* v5.49: SABOTAGE SKILLS - day nang luong thi tung don pha roi doi thu */
+/* v5.49: SABOTAGE SKILLS - day nang luong thi tung don pha roi doi thu
+   v5.51: + SHIELD phong thu, + COOLDOWN rieng tung skill */
+const DUEL_CD = { freeze:8000, shield:8000, ink:10000, shuffle:12000 }; /* shield = freeze, dao phim lau hon */
 function duel2Skill(pi, sk){
   if(!duel2.active || duel2.over) return;
   const P = duel2.p[pi], O = duel2.p[1 - pi];
   if((P.en || 0) < DUEL_EN_MAX) return;
-  P.en = 0;
   const nowT = performance.now();
+  P.cd = P.cd || {};
+  if((P.cd[sk] || 0) > nowT) return; /* v5.51: dang hoi chieu */
+  P.en = 0;
+  P.cd[sk] = nowT + (DUEL_CD[sk] || 8000);
+  /* v5.51: SHIELD - giap chan chieu 5s */
+  if(sk === "shield"){
+    P.shieldUntil = nowT + 5000;
+    try{
+      sfx.powerup(); tone("sine", 280, 620, now(), 0.35, 0.08);
+      flashScreen("rgba(90,180,220,.16)"); vib([40]);
+    }catch(e){}
+    renderDuel2();
+    return;
+  }
+  /* v5.51: doi thu dang co KHIEN -> don ban bi chan dung, trong tai bao SAFE */
+  if(nowT < (O.shieldUntil || 0)){
+    try{
+      sfx.refWhistle();
+      duelRefReact("safe", 1 - pi, 1600);
+      const op = $("dp" + (2 - pi)).getBoundingClientRect();
+      floatText(op.left + op.width/2, op.top + op.height/2, "🛡️ CHẶN ĐỨNG!", "#5AB4DC", 20);
+      ringPulse(op.left + op.width/2, op.top + op.height/2, "rgba(90,180,220,.9)", 2);
+      vib([30,30,30]);
+    }catch(e){}
+    renderDuel2();
+    return;
+  }
   if(sk === "freeze"){
     O.frozenUntil = nowT + 2000;
     try{ sfx.freezeUse(); }catch(e){}
@@ -6052,6 +6114,18 @@ function duelRefReact(mode, side, ms){
   if(mode === "card"){ try{ sfx.refWhistle(); }catch(e){} }
 }
 let _drctx = null;
+let _refParts = []; /* v5.51: hat FX cua trong tai */
+let _refLastMode = "idle";
+function refSpray(n, colors, up){
+  for(let i=0;i<n;i++){
+    _refParts.push({
+      x: 60 + (Math.random()*40 - 20), y: 46 + (Math.random()*20 - 10),
+      vx: (Math.random()-0.5)*2.2, vy: (up ? -1 : 1) * (0.8 + Math.random()*1.6),
+      life: 1, decay: 0.03 + Math.random()*0.02,
+      size: 2 + Math.random()*2.5, color: colors[i % colors.length],
+    });
+  }
+}
 function drawDuelRef(t){
   const cv = $("duelRef"); if(!cv) return;
   if(!_drctx){ try{ _drctx = cv.getContext("2d"); }catch(e){ return; } }
@@ -6059,13 +6133,28 @@ function drawDuelRef(t){
   g.clearRect(0, 0, 120, 96);
   const nowT = performance.now();
   if(duelRef.until && nowT > duelRef.until){ duelRef.mode = "idle"; duelRef.until = 0; }
+  /* doi mode -> phun hat chao */
+  if(duelRef.mode !== _refLastMode){
+    _refLastMode = duelRef.mode;
+    if(duelRef.mode === "cheer") refSpray(10, ["#D97757","#C9A227","#F0EEE6"], true);
+    else if(duelRef.mode === "safe") refSpray(10, ["#7DFFB0","#5AB4DC","#BDE3F0"], true);
+    else if(duelRef.mode === "card") refSpray(6, ["#F2C230","#C05B41"], true);
+  }
   const bob = Math.sin(t/300) * 2;
+  const sway = Math.sin(t/900) * 0.03; /* v5.51: lac lu nhe */
   let jump = 0, sq = 1;
-  if(duelRef.mode === "cheer") jump = Math.abs(Math.sin(t/90)) * 8;   /* nhay co vu */
-  if(duelRef.mode === "laugh") sq = 1 + Math.sin(t/70) * 0.08;        /* cuoi rung bung */
+  if(duelRef.mode === "cheer") jump = Math.abs(Math.sin(t/90)) * 8;
+  if(duelRef.mode === "safe")  jump = Math.abs(Math.sin(t/80)) * 10; /* nhay len thoi coi */
+  if(duelRef.mode === "laugh") sq = 1 + Math.sin(t/70) * 0.08;
+  /* buc + bong do */
+  g.fillStyle = "rgba(61,57,41,.18)";
+  g.beginPath(); g.ellipse(60, 90, 26, 5, 0, 0, Math.PI*2); g.fill();
+  g.fillStyle = "rgba(201,162,39,.25)";
+  g.beginPath(); g.ellipse(60, 90, 30 + Math.sin(t/400)*2, 3, 0, 0, Math.PI*2); g.fill();
   /* than trong tai = character nguoi choi dang dung */
   g.save();
   g.translate(60, 88 + bob - jump);
+  g.rotate(duelRef.mode === "laugh" ? Math.sin(t/90)*0.06 : sway);
   g.scale(1, sq);
   g.imageSmoothingEnabled = false;
   try{
@@ -6079,44 +6168,106 @@ function drawDuelRef(t){
     }
   }catch(e){}
   g.restore();
-  /* coi trong tai deo co */
+  /* coi vang deo day, xoay nhe theo nhip */
   g.save();
   g.translate(60, 88 + bob - jump);
-  g.fillStyle = "#C9A227"; g.fillRect(8, -34, 10, 7);
-  g.fillStyle = "#8A8578"; g.beginPath(); g.arc(20, -30, 5, 0, Math.PI*2); g.fill();
+  g.rotate(Math.sin(t/500)*0.05);
   g.strokeStyle = "#5C574A"; g.lineWidth = 1.5;
   g.beginPath(); g.moveTo(8, -34); g.quadraticCurveTo(0, -44, -2, -50); g.stroke();
+  g.fillStyle = "#C9A227"; g.fillRect(8, -34, 10, 7);
+  g.fillStyle = "#E7C24A"; g.fillRect(8, -34, 10, 2); /* bong sang */
+  g.fillStyle = "#8A8578"; g.beginPath(); g.arc(20, -30, 5, 0, Math.PI*2); g.fill();
+  g.fillStyle = "#B8B2A5"; g.beginPath(); g.arc(18.5, -31.5, 1.6, 0, Math.PI*2); g.fill();
   g.restore();
+  /* hat FX */
+  for(const p of _refParts){
+    p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.life -= p.decay;
+    if(p.life > 0){ g.globalAlpha = Math.min(1, p.life); g.fillStyle = p.color; g.fillRect(p.x, p.y, p.size, p.size); }
+  }
+  g.globalAlpha = 1;
+  _refParts = _refParts.filter(p => p.life > 0);
   /* phan ung */
   g.textAlign = "center"; g.font = "16px sans-serif";
   if(duelRef.mode === "cheer"){
-    /* chi tay + mui ten ve phia nguoi vua ghi diem (dp2 = tren, dp1 = duoi) */
     const up = duelRef.side === 1;
-    const pulse = 0.7 + 0.3 * Math.abs(Math.sin(t/120));
+    const pulse = 0.65 + 0.35 * Math.abs(Math.sin(t/120));
     g.save(); g.globalAlpha = pulse;
     g.fillStyle = "#D97757";
+    g.shadowColor = "#D97757"; g.shadowBlur = 8; /* v5.51: mui ten glow */
     g.beginPath();
-    if(up){ g.moveTo(60, 6); g.lineTo(50, 20); g.lineTo(70, 20); }
-    else { g.moveTo(60, 94); g.lineTo(50, 80); g.lineTo(70, 80); }
+    if(up){ g.moveTo(60, 4); g.lineTo(49, 19); g.lineTo(71, 19); }
+    else { g.moveTo(60, 94); g.lineTo(49, 79); g.lineTo(71, 79); }
     g.closePath(); g.fill();
     g.restore();
-    g.fillText("📣", 94, 34);
+    g.fillText("📣", 96, 34);
   } else if(duelRef.mode === "card"){
-    /* gio the vang + thoi coi */
     const lift = Math.min(1, Math.max(0, (nowT - (duelRef.until - 1300)) / 180));
     g.save();
-    g.translate(90, 44 - lift*20);
-    g.rotate(-0.15 + Math.sin(t/120)*0.07);
+    g.translate(92, 44 - lift*22);
+    g.rotate(-0.15 + Math.sin(t/110)*0.09);
+    g.shadowColor = "#F2C230"; g.shadowBlur = 10; /* v5.51: the vang glow */
     g.fillStyle = "#F2C230"; g.fillRect(-7, -12, 14, 22);
+    g.shadowBlur = 0;
+    g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(-7, -12, 14, 5);
     g.strokeStyle = "#B3573F"; g.lineWidth = 1; g.strokeRect(-7, -12, 14, 22);
     g.restore();
+    /* van coi "tweee" */
+    g.strokeStyle = "rgba(240,238,230,.75)"; g.lineWidth = 1.5;
+    for(let i=0;i<3;i++){
+      const ph = ((t/140) + i*0.8) % 3;
+      g.globalAlpha = Math.max(0, 1 - ph/3);
+      g.beginPath(); g.arc(82 - bob, 54, 8 + ph*7, -0.7, 0.7); g.stroke();
+    }
+    g.globalAlpha = 1;
     g.fillText("😗", 28, 32);
   } else if(duelRef.mode === "laugh"){
     g.fillText("😆", 92, 34);
+    if(Math.floor(t/300) % 2) g.fillText("💧", 100, 50); /* cuoi ra nuoc mat */
+  } else if(duelRef.mode === "safe"){
+    /* v5.51: gio 2 tay ngang bao SAFE nhu trong tai bong chay */
+    g.save();
+    g.strokeStyle = "#7DFFB0"; g.lineWidth = 4; g.lineCap = "round";
+    g.shadowColor = "#7DFFB0"; g.shadowBlur = 8;
+    const spread = Math.min(1, Math.abs(Math.sin(t/160)) + 0.4);
+    g.beginPath(); g.moveTo(60, 52 - jump); g.lineTo(60 - 26*spread, 48 - jump); g.stroke();
+    g.beginPath(); g.moveTo(60, 52 - jump); g.lineTo(60 + 26*spread, 48 - jump); g.stroke();
+    g.restore();
+    if(Math.floor(t/180) % 2){
+      g.font = "bold 13px 'Courier New'";
+      g.fillStyle = "#7DFFB0";
+      g.fillText("SAFE!", 60, 14);
+      g.font = "16px sans-serif";
+    }
+  }
+}
+/* v5.51: tick nhe moi frame - cap nhat cooldown badge + go giap het han (khong rebuild pane) */
+function duel2SkillTick(){
+  if(!duel2.p) return;
+  const nowT = performance.now();
+  for(let pi=0; pi<2; pi++){
+    const P = duel2.p[pi];
+    const pane = $("dp" + (pi + 1)); if(!pane) continue;
+    const enFull = (P.en || 0) >= DUEL_EN_MAX;
+    pane.querySelectorAll(".dpSkill").forEach(b=>{
+      const sk = b.dataset.sk;
+      const rem = ((P.cd && P.cd[sk]) || 0) - nowT;
+      const cding = rem > 0;
+      b.disabled = !enFull || cding || duel2.over;
+      b.classList.toggle("cding", cding);
+      const badge = b.querySelector("i");
+      if(badge){ const txt = cding ? String(Math.ceil(rem/1000)) : ""; if(badge.textContent !== txt) badge.textContent = txt; }
+    });
+    const sg = pane.querySelector(".dpShieldGlow");
+    if(sg && nowT > (P.shieldUntil || 0)) sg.remove();
   }
 }
 const DUEL_KB_ROWS = ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
-const DUEL_SKILLS = [["freeze","🧊","Đóng băng phím đối thủ 2s"],["shuffle","🔀","Đảo phím đối thủ 3s"],["ink","🖋️","Che từ đối thủ 4s"]];
+const DUEL_SKILLS = [
+  ["freeze","🧊","Đóng băng phím đối thủ 2s · hồi 8s"],
+  ["shuffle","🔀","Đảo phím đối thủ 3s · hồi 12s"],
+  ["ink","🖋️","Che từ đối thủ 4s · hồi 10s"],
+  ["shield","🛡️","Giáp chặn chiêu bẩn 5s · hồi 8s"],
+];
 function renderDuel2(){
   if(!duel2.p) return;
   const nowT = performance.now();
@@ -6132,7 +6283,8 @@ function renderDuel2(){
     h += '<div class="dpWordWrap"><div class="dpWord">';
     P.word.split("").forEach(ch=>{
       const on = P.rev.has(ch);
-      h += '<div class="dpSlot' + (on ? " on" : "") + '">' + (on ? ch : "") + '</div>';
+      const gold = on && P.goldHit && ch === P.gold; /* v5.51: chu vang phat sang */
+      h += '<div class="dpSlot' + (on ? " on" : "") + (gold ? " gold" : "") + '">' + (on ? ch : "") + '</div>';
     });
     h += '</div>';
     if(inked) h += '<div class="dpInk">🖋️</div>';
@@ -6157,9 +6309,13 @@ function renderDuel2(){
     h += '<div class="dpEn' + (enFull ? " full" : "") + '"><i style="width:' + Math.round(((P.en||0)/DUEL_EN_MAX)*100) + '%"></i></div>';
     h += '<div class="dpSkills">';
     DUEL_SKILLS.forEach(([sk, ico, tip])=>{
-      h += '<button class="dpSkill" data-sk="' + sk + '" title="' + tip + '"' + ((enFull && !duel2.over) ? "" : " disabled") + '>' + ico + '</button>';
+      const rem = ((P.cd && P.cd[sk]) || 0) - nowT; /* v5.51: cooldown */
+      const cding = rem > 0;
+      const usable = enFull && !cding && !duel2.over;
+      h += '<button class="dpSkill' + (cding ? " cding" : "") + '" data-sk="' + sk + '" title="' + tip + '"' + (usable ? "" : " disabled") + '><span>' + ico + '</span><i>' + (cding ? Math.ceil(rem/1000) : "") + '</i></button>';
     });
     h += '</div>';
+    if(nowT < (P.shieldUntil || 0)) h += '<div class="dpShieldGlow"></div>'; /* v5.51: giap sang */
     if(P.res){
       h += '<div class="dpOver ' + P.res + '">' +
         (P.res === "win" ? "🏆 CHIẾN THẮNG!" + (duel2.pot ? '<small>+' + duel2.pot + '¢ TIỀN CƯỢC</small>' : "") : "💀 THUA CUỘC") +
