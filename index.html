@@ -1163,6 +1163,54 @@
   .dpOver small{font-family:"Courier New",monospace; font-size:13px; color:#D9D5C8; letter-spacing:1px;}
   #duelCtrls{display:flex; justify-content:center; gap:8px;}
   #duelCtrls.hidden{display:none;}
+  /* ==== v5.49: DUEL nang cap ==== */
+  /* keo co giao dien: pane co gian theo the tran */
+  .duelPane{transition:flex-grow .45s var(--spring);}
+  #duelVs.tugMove{animation:vsTug .4s var(--spring);}
+  @keyframes vsTug{0%{transform:scale(1);}45%{transform:scale(1.35); color:var(--bad);}100%{transform:scale(1);}}
+  /* cuoc xu */
+  #duelWagerRow{display:flex; align-items:center; justify-content:center; gap:6px; margin:8px 0; flex-wrap:wrap;}
+  #dwLbl{font-family:"Courier New",monospace; font-size:11px; letter-spacing:1px; color:var(--muted);}
+  .dwChip{
+    font-family:"Courier New",monospace; font-size:12px; font-weight:bold;
+    background:var(--card); border:1.5px solid var(--line); border-radius:999px;
+    padding:5px 12px; cursor:pointer; color:var(--ink);
+  }
+  .dwChip.on{background:var(--gold); border-color:var(--gold); color:#fff; box-shadow:0 0 8px rgba(201,162,39,.5);}
+  .dwChip:disabled{opacity:.35; cursor:default;}
+  #duelPot{
+    font-family:"Courier New",monospace; font-size:12px; font-weight:bold; letter-spacing:1px;
+    color:var(--gold); text-align:center;
+  }
+  /* thanh nang luong + skill */
+  .dpEn{width:70%; max-width:220px; height:7px; border:1px solid var(--line); border-radius:5px; overflow:hidden; background:var(--bg);}
+  .dpEn i{display:block; height:100%; background:linear-gradient(90deg, #8E6AB3, #B45AFF); transition:width .3s var(--spring);}
+  .dpEn.full i{animation:armedPulse .6s infinite;}
+  .dpSkills{display:flex; gap:6px;}
+  .dpSkill{
+    width:38px; height:34px; border-radius:8px; border:1.5px solid var(--line);
+    background:var(--bg); font-size:16px; cursor:pointer; padding:0;
+  }
+  .dpSkill:not(:disabled){border-color:#B45AFF; box-shadow:0 0 8px rgba(180,90,255,.55); animation:armedPulse 1s infinite;}
+  .dpSkill:disabled{opacity:.35; cursor:default;}
+  /* hieu ung bi pha roi */
+  .dpKbWrap{position:relative; display:flex; flex-direction:column; gap:4px; align-items:center;}
+  .dpFreeze{
+    position:absolute; inset:-4px; z-index:4; border-radius:10px;
+    background:linear-gradient(160deg, rgba(150,205,235,.55), rgba(190,227,240,.4));
+    box-shadow:inset 0 0 20px 5px rgba(150,205,235,.8);
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+    animation:frostPulse 1s infinite;
+  }
+  .dpInk{
+    position:absolute; inset:-6px; z-index:4; border-radius:45% 55% 50% 48%;
+    background:radial-gradient(ellipse at 45% 45%, #14110E 55%, rgba(20,17,14,.85) 75%, transparent 95%);
+    display:flex; align-items:center; justify-content:center; font-size:20px; color:#3C3830;
+    animation:inkSplat .35s var(--spring);
+  }
+  @keyframes inkSplat{0%{transform:scale(.2) rotate(-20deg); opacity:0;}60%{transform:scale(1.15) rotate(4deg); opacity:1;}100%{transform:scale(1);}}
+  .dpWordWrap{position:relative;}
+  #dp1 .dpKb.shuffling, #dp2 .dpKb.shuffling{animation:hexSpin .5s var(--spring);}
 </style>
 </head>
 <body>
@@ -1288,6 +1336,12 @@
   <div id="duelPanel">
     <div id="duelTitle">DUEL &middot; <span>2 PLAYERS</span></div>
     <div id="duelSub">PLAYER 1 &mdash; TYPE A SECRET WORD, THEN HAND OVER</div>
+    <div id="duelWagerRow"><span id="dwLbl">CƯỢC MỖI NGƯỜI:</span>
+      <button class="dwChip on" data-w="0">0&cent;</button>
+      <button class="dwChip" data-w="20">20&cent;</button>
+      <button class="dwChip" data-w="50">50&cent;</button>
+      <button class="dwChip" data-w="100">100&cent;</button>
+    </div>
     <input id="duelInput" type="password" maxlength="14" autocomplete="off" placeholder="SECRET WORD">
     <div id="duelErr"></div>
     <button class="pbtn primary" id="duelStart">START</button>
@@ -5836,6 +5890,20 @@ function openDuel(){
   $("duelInput").value = "";
   $("duelErr").textContent = "";
   $("duelSub").textContent = "NGƯỜI CHƠI 1 — NHẬP TỪ BÍ MẬT (CHO P2 ĐOÁN)";
+  /* v5.49: chi cho chon muc cuoc du tien (moi nguoi cuoc w -> can 2w trong vi) */
+  try{
+    $("duelWagerRow").classList.remove("hidden");
+    let affordSel = false;
+    document.querySelectorAll(".dwChip").forEach(c=>{
+      const wv = parseInt(c.dataset.w) || 0;
+      c.disabled = (stats.coins || 0) < wv * 2;
+      if(c.classList.contains("on") && c.disabled){ c.classList.remove("on"); duel2.wager = 0; }
+    });
+    if(![...document.querySelectorAll(".dwChip")].some(c=>c.classList.contains("on"))){
+      const c0 = document.querySelector('.dwChip[data-w="0"]'); if(c0) c0.classList.add("on");
+      duel2.wager = 0;
+    }
+  }catch(e){}
   $("duelModal").classList.remove("hidden");
   setTimeout(()=>{ try{ $("duelInput").focus(); }catch(e){} }, 60);
 }
@@ -5850,6 +5918,7 @@ function duelBegin(){
     $("duelInput").value = "";
     $("duelErr").textContent = "";
     $("duelSub").textContent = "NGƯỜI CHƠI 2 — NHẬP TỪ BÍ MẬT (CHO P1 ĐOÁN)";
+    $("duelWagerRow").classList.add("hidden"); /* v5.49: chot cuoc sau buoc 1 */
     try{ sfx.click(); }catch(e){}
     setTimeout(()=>{ try{ $("duelInput").focus(); }catch(e){} }, 60);
     return;
@@ -5858,45 +5927,91 @@ function duelBegin(){
   $("duelModal").classList.add("hidden");
   duelStart2(w1, w);
 }
-const duel2 = { active:false, over:false, p:null };
+const duel2 = { active:false, over:false, p:null, tug:0, wager:0 };
+const DUEL_EN_MAX = 3; /* v5.49: 3 chu dung = day nang luong skill */
 function duelStart2(w1, w2){
   state.screen = "duel2"; /* nhac duel + loop nhe */
   state.mode = "duel";
-  duel2.active = true; duel2.over = false;
+  duel2.active = true; duel2.over = false; duel2.tug = 0;
   duel2.p = [
-    { word:w2, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"" }, /* P1 doan tu cua P2 */
-    { word:w1, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"" }, /* P2 doan tu cua P1 */
+    { word:w2, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"", en:0, frozenUntil:0, shufUntil:0, shufOrder:null, inkUntil:0 },
+    { word:w1, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"", en:0, frozenUntil:0, shufUntil:0, shufOrder:null, inkUntil:0 },
   ];
+  /* v5.49: CUOC XU - tru moi nguoi wager (chung vi tren 1 may), thang an tron pot */
+  duel2.pot = (duel2.wager || 0) * 2;
+  if(duel2.pot > 0){ stats.coins = Math.max(0, (stats.coins||0) - duel2.pot); saveStats(); updateCoinHud(); }
   $("menuScreen").classList.add("hidden");
   $("gameScreen").classList.add("hidden");
   $("duelScreen").classList.remove("hidden");
   $("duelCtrls").classList.add("hidden");
   ensureAudio(); try{ sfx.powerup(); }catch(e){}
-  try{ bossBanner("⚔ DUEL 2P ⚔"); }catch(e){}
+  try{ bossBanner("⚔ DUEL 2P" + (duel2.pot ? " · " + duel2.pot + "¢" : "") + " ⚔"); }catch(e){}
+  duel2ApplyTug();
   renderDuel2();
+}
+/* v5.49: KEO CO GIAO DIEN - vach chia xe dich theo the tran */
+function duel2ApplyTug(){
+  try{
+    $("dp1").style.flexGrow = (1 + duel2.tug).toFixed(2);
+    $("dp2").style.flexGrow = (1 - duel2.tug).toFixed(2);
+    const vs = $("duelVs");
+    vs.classList.remove("tugMove"); void vs.offsetWidth; vs.classList.add("tugMove");
+  }catch(e){}
 }
 function duel2Guess(pi, L){
   if(!duel2.active || duel2.over) return;
   const P = duel2.p[pi];
+  if(performance.now() < P.frozenUntil) return; /* v5.49: dang bi dong bang */
   if(P.rev.has(L) || P.wrong.has(L)) return;
   ensureAudio();
-  const pan = 0; /* 2 nguoi chung loa */
+  const dir = pi === 0 ? 1 : -1; /* dp1 no ra khi P1 danh tot */
   if(P.word.includes(L)){
     P.rev.add(L);
-    try{ sfx.good(2, pan); }catch(e){}
+    P.en = Math.min(DUEL_EN_MAX, (P.en || 0) + 1); /* v5.49: tich nang luong */
+    duel2.tug = Math.max(-0.35, Math.min(0.35, duel2.tug + 0.05 * dir)); /* v5.49: don ep doi thu 5% */
+    try{ sfx.good(2, 0); }catch(e){}
     if([...new Set(P.word.split(""))].every(ch => P.rev.has(ch))){ duel2End(pi); return; }
   } else {
     P.wrong.add(L); P.misses += 1;
-    try{ sfx.bad(pan); }catch(e){}
+    duel2.tug = Math.max(-0.35, Math.min(0.35, duel2.tug - 0.05 * dir)); /* sai -> bi day nguoc */
+    try{ sfx.bad(0); }catch(e){}
     shake("sm");
     if(P.misses >= P.maxM){ duel2End(pi === 0 ? 1 : 0); return; }
   }
+  duel2ApplyTug();
+  renderDuel2();
+}
+/* v5.49: SABOTAGE SKILLS - day nang luong thi tung don pha roi doi thu */
+function duel2Skill(pi, sk){
+  if(!duel2.active || duel2.over) return;
+  const P = duel2.p[pi], O = duel2.p[1 - pi];
+  if((P.en || 0) < DUEL_EN_MAX) return;
+  P.en = 0;
+  const nowT = performance.now();
+  if(sk === "freeze"){
+    O.frozenUntil = nowT + 2000;
+    try{ sfx.freezeUse(); }catch(e){}
+    setTimeout(()=>{ try{ renderDuel2(); }catch(e){} }, 2080);
+  } else if(sk === "shuffle"){
+    O.shufUntil = nowT + 3000;
+    O.shufOrder = shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
+    try{ sfx.bossSkill2("witch"); }catch(e){}
+    setTimeout(()=>{ try{ O.shufOrder = null; renderDuel2(); }catch(e){} }, 3080);
+  } else if(sk === "ink"){
+    O.inkUntil = nowT + 4000;
+    try{ sfx.bad(0); noise(now(), 0.25, 0.2, 500); }catch(e){}
+    setTimeout(()=>{ try{ renderDuel2(); }catch(e){} }, 4080);
+  }
+  shake("sm");
+  try{ flashScreen("rgba(180,90,255,.2)"); vib([50]); }catch(e){}
   renderDuel2();
 }
 function duel2End(winnerIdx){
   duel2.over = true; duel2.active = false;
   duel2.p[winnerIdx].res = "win";
   duel2.p[1 - winnerIdx].res = "lose";
+  /* v5.49: thang an tron quy cuoc */
+  if(duel2.pot > 0){ try{ addCoins(duel2.pot); }catch(e){ stats.coins = (stats.coins||0) + duel2.pot; saveStats(); updateCoinHud(); } }
   try{ unlock("duel"); saveStats(); }catch(e){}
   try{
     sfx.win(); vib([60,40,60,40,140]);
@@ -5907,38 +6022,62 @@ function duel2End(winnerIdx){
   renderDuel2();
 }
 function duel2Exit(){
-  duel2.active = false; duel2.over = false; duel2.p = null;
+  /* v5.49: thoat giua tran -> hoan tien cuoc */
+  if(duel2.active && duel2.pot > 0){ stats.coins = (stats.coins||0) + duel2.pot; saveStats(); updateCoinHud(); }
+  duel2.active = false; duel2.over = false; duel2.p = null; duel2.pot = 0; duel2.tug = 0;
+  try{ $("dp1").style.flexGrow = ""; $("dp2").style.flexGrow = ""; }catch(e){} /* v5.49: reset keo co */
   state.screen = "menu"; state.mode = "classic";
   $("duelScreen").classList.add("hidden");
   $("menuScreen").classList.remove("hidden");
 }
 const DUEL_KB_ROWS = ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+const DUEL_SKILLS = [["freeze","🧊","Đóng băng phím đối thủ 2s"],["shuffle","🔀","Đảo phím đối thủ 3s"],["ink","🖋️","Che từ đối thủ 4s"]];
 function renderDuel2(){
   if(!duel2.p) return;
+  const nowT = performance.now();
   for(let pi=0; pi<2; pi++){
     const P = duel2.p[pi];
     const pane = $("dp" + (pi + 1)); if(!pane) continue;
-    let h = '<div class="dpName">NGƯỜI CHƠI ' + (pi + 1) + '</div>';
+    const frozen = nowT < P.frozenUntil;
+    const inked = nowT < P.inkUntil;
+    const enFull = (P.en || 0) >= DUEL_EN_MAX;
+    let h = '<div class="dpName">NGƯỜI CHƠI ' + (pi + 1) + (duel2.pot ? ' · POT ' + duel2.pot + '¢' : '') + '</div>';
     h += '<div class="dpHearts">' + "❤".repeat(Math.max(0, P.maxM - P.misses)) + '<span style="opacity:.25">' + "❤".repeat(P.misses) + '</span></div>';
-    h += '<div class="dpWord">';
+    /* tu + vet muc che */
+    h += '<div class="dpWordWrap"><div class="dpWord">';
     P.word.split("").forEach(ch=>{
       const on = P.rev.has(ch);
       h += '<div class="dpSlot' + (on ? " on" : "") + '">' + (on ? ch : "") + '</div>';
     });
-    h += '</div><div class="dpKb">';
-    DUEL_KB_ROWS.forEach(row=>{
+    h += '</div>';
+    if(inked) h += '<div class="dpInk">🖋️</div>';
+    h += '</div>';
+    /* ban phim (shuffle dung order rieng) + lop bang */
+    const order = (nowT < P.shufUntil && P.shufOrder) ? P.shufOrder : null;
+    const rows = order ? [order.slice(0,10), order.slice(10,19), order.slice(19,26)] : DUEL_KB_ROWS.map(r=>r.split(""));
+    h += '<div class="dpKbWrap"><div class="dpKb' + (order ? " shuffling" : "") + '">';
+    rows.forEach(rowArr=>{
       h += '<div class="dkRow">';
-      row.split("").forEach(L=>{
+      rowArr.forEach(L=>{
         const ok = P.rev.has(L) && P.word.includes(L);
         const no = P.wrong.has(L);
-        h += '<button class="dpKey' + (ok ? " ok" : "") + (no ? " no" : "") + '" data-l="' + L + '"' + ((ok || no || duel2.over) ? " disabled" : "") + '>' + L + '</button>';
+        h += '<button class="dpKey' + (ok ? " ok" : "") + (no ? " no" : "") + '" data-l="' + L + '"' + ((ok || no || duel2.over || frozen) ? " disabled" : "") + '>' + L + '</button>';
       });
       h += '</div>';
     });
     h += '</div>';
+    if(frozen) h += '<div class="dpFreeze">❄</div>';
+    h += '</div>';
+    /* nang luong + skill */
+    h += '<div class="dpEn' + (enFull ? " full" : "") + '"><i style="width:' + Math.round(((P.en||0)/DUEL_EN_MAX)*100) + '%"></i></div>';
+    h += '<div class="dpSkills">';
+    DUEL_SKILLS.forEach(([sk, ico, tip])=>{
+      h += '<button class="dpSkill" data-sk="' + sk + '" title="' + tip + '"' + ((enFull && !duel2.over) ? "" : " disabled") + '>' + ico + '</button>';
+    });
+    h += '</div>';
     if(P.res){
       h += '<div class="dpOver ' + P.res + '">' +
-        (P.res === "win" ? "🏆 CHIẾN THẮNG!" : "💀 THUA CUỘC") +
+        (P.res === "win" ? "🏆 CHIẾN THẮNG!" + (duel2.pot ? '<small>+' + duel2.pot + '¢ TIỀN CƯỢC</small>' : "") : "💀 THUA CUỘC") +
         '<small>TỪ LÀ: ' + P.word + '</small></div>';
     }
     pane.innerHTML = h;
@@ -6626,12 +6765,22 @@ $("metaClose").onclick = ()=>{ sfx.click(); closeMeta(); };
 $("metaModal").addEventListener("click", (e)=>{ if(e.target === $("metaModal")) closeMeta(); });
 $("duelStart").onclick = duelBegin;
 $("duelCancel").onclick = ()=>{ $("duelModal").classList.add("hidden"); _duelW1 = null; backToMenu(); };
-/* v5.48: duel 2P wiring */
+/* v5.48: duel 2P wiring | v5.49: + skill + wager */
 ["dp1","dp2"].forEach((id, pi)=>{
   $(id).addEventListener("click", e=>{
     const k = e.target.closest(".dpKey");
-    if(k && k.dataset.l) duel2Guess(pi, k.dataset.l);
+    if(k && k.dataset.l){ duel2Guess(pi, k.dataset.l); return; }
+    const s = e.target.closest(".dpSkill");
+    if(s && s.dataset.sk && !s.disabled) duel2Skill(pi, s.dataset.sk);
   });
+});
+document.querySelectorAll(".dwChip").forEach(ch=>{
+  ch.onclick = ()=>{
+    if(ch.disabled) return;
+    duel2.wager = parseInt(ch.dataset.w) || 0;
+    document.querySelectorAll(".dwChip").forEach(c=> c.classList.toggle("on", c === ch));
+    try{ sfx.click(); }catch(e){}
+  };
 });
 $("duelExit").onclick = ()=> duel2Exit();
 $("duelAgain").onclick = ()=>{ $("duelScreen").classList.add("hidden"); openDuel(); };
