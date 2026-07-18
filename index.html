@@ -1996,6 +1996,16 @@ function bossMotion(K, t, rage){
     case "boar":   { const c=(t/(700*sp))%1; m.dy = -Math.abs(Math.sin(c*Math.PI))*7; if(c>0.86||c<0.08) m.sqy = 0.94; break; } /* giam chan */
     default:       m.dy = Math.sin(t/(420*sp))*5; /* wolf: bob chuan */
   }
+  /* v5.45: BEAT-SYNC - boss nhun giat theo nhip nhac; nhac cang nhanh (boss/enrage) nhun cang gat */
+  try{
+    const bp = (typeof beatPulse === "function") ? beatPulse() : 0;
+    if(bp > 0){
+      const kk = bp*bp*bp; /* dap manh dung phach */
+      m.dy -= kk * 4;
+      m.sqy *= 1 + kk * 0.05;
+      m.sqx *= 1 - kk * 0.025;
+    }
+  }catch(e){}
   return m;
 }
 /* particle ambient rieng cho tung boss (nhe, rate-limit) */
@@ -2043,6 +2053,32 @@ function drawBossArena(t){
     sctx.fillStyle = (typeof KB_TINT !== "undefined" && KB_TINT[K.id]) || "rgba(192,91,65,.15)";
     sctx.fillRect(0, 0, 640, 300);
     sctx.restore();
+    /* v5.45: SET danh ngau nhien tren bau troi dau truong khi enraged */
+    if(!reduced() && settings.parts){
+      const nowT = performance.now();
+      if(!bossFx._nextBolt || nowT > bossFx._nextBolt){
+        bossFx._nextBolt = nowT + 1300 + Math.random()*2300;
+        const segs = []; let lx = 60 + Math.random()*520, ly = 0;
+        const endY = 95 + Math.random()*65;
+        while(ly < endY){ const ny = ly + 12 + Math.random()*16, nx = lx + (Math.random()*32 - 16); segs.push([lx, ly, nx, ny]); lx = nx; ly = ny; }
+        if(Math.random() < 0.45){ const bl = segs[Math.floor(segs.length/2)]; segs.push([bl[2], bl[3], bl[2] + (Math.random()*40-20), bl[3] + 25 + Math.random()*20]); } /* nhanh re */
+        bossFx._bolt = { t0: nowT, segs };
+        try{ noise(now(), 0.3, 0.1, 300); tone("sine", 70, 40, now(), 0.25, 0.12); }catch(e){} /* sam ren */
+      }
+      const bAge = nowT - (bossFx._bolt ? bossFx._bolt.t0 : 1e9);
+      if(bossFx._bolt && bAge < 170){
+        const al = 1 - bAge/170;
+        sctx.save();
+        sctx.globalAlpha = al * 0.22; sctx.fillStyle = "#F0EEE6"; sctx.fillRect(0, 0, 640, 130); /* troi chop sang */
+        sctx.globalAlpha = al;
+        sctx.strokeStyle = "#F5F3EC"; sctx.lineWidth = 2.5;
+        sctx.shadowColor = "#BFD8FF"; sctx.shadowBlur = 12;
+        sctx.beginPath();
+        for(const sg of bossFx._bolt.segs){ sctx.moveTo(sg[0], sg[1]); sctx.lineTo(sg[2], sg[3]); }
+        sctx.stroke();
+        sctx.restore();
+      }
+    }
   }
   const M = bossMotion(K, t, rage);
   let by = BOSS_Y - (K.fly ? 16 : 0) + M.dy;
@@ -2106,6 +2142,18 @@ function drawBossArena(t){
     const to   = a.type === "up" ? mouth : {x: pig.x + PIG_W/2, y: pig.y + PIG_H - 20};
     const ax = from.x + (to.x - from.x) * p;
     const ay = from.y + (to.y - from.y) * p - Math.sin(p * Math.PI) * 52;
+    /* v5.45: VET DUOI HAT SANG bam theo bong - xanh lam khi pig sut, do ruc khi boss nem */
+    if(!reduced() && settings.parts){
+      const tc = a.type === "up" ? ["#5AB4DC","#BDE3F0","#7DC8F0"] : ["#C05B41","#FF7040","#FFAA6A"];
+      for(let ti=0; ti<2; ti++){
+        cparts.push({
+          x: ax + 12 + (Math.random()*8-4), y: ay + 12 + (Math.random()*8-4),
+          vx: (from.x < to.x ? -1 : 1) * (0.4 + Math.random()*0.6), vy: (Math.random()-0.3)*0.7,
+          life: 0.75, decay: 0.055 + Math.random()*0.02,
+          size: 2 + Math.random()*2.5, color: tc[Math.floor(Math.random()*tc.length)], g: 0.01,
+        });
+      }
+    }
     drawBallSprite(sctx, ax, ay, 3, t/50);
   } else {
     const r = bossBallRest();
@@ -2434,6 +2482,11 @@ const BASS = [52,0,0,0, 45,0,0,0, 50,0,0,0, 48,0,0,0,
               52,0,0,0, 45,0,0,0, 50,0,48,0, 43,0,0,0];
 const MEL_MENU  = [69,0,0,0, 72,0,0,0, 67,0,0,0, 64,0,0,64, 69,0,0,0, 72,0,74,0, 71,0,0,0, 0,0,0,0];
 const BASS_MENU = [45,0,0,0, 48,0,0,0, 43,0,0,0, 40,0,0,0, 45,0,0,0, 48,0,0,0, 50,0,0,0, 43,0,0,0];
+/* v5.45: DUEL track - A-minor don dap, canh tranh */
+const MEL_DUEL  = [69,0,69,72, 76,0,72,0, 69,0,74,72, 71,0,69,0,
+                   69,0,69,72, 76,0,79,76, 74,0,71,0, 72,71,69,0];
+const BASS_DUEL = [45,0,45,0, 41,0,41,0, 43,0,43,0, 44,0,44,0,
+                   45,0,45,0, 41,0,41,0, 43,0,44,0, 45,0,45,0];
 /* boss track: E-minor menace, nhanh hon (v5.19 P3) */
 const MEL_BOSS  = [64,0,64,67, 70,0,67,0, 64,0,64,63, 62,0,63,64,
                    64,0,64,67, 70,0,72,70, 67,0,64,0, 62,0,63,0];
@@ -2443,6 +2496,13 @@ function curTrack(){
   if(state.screen === "menu") return {id:"menu", mel:MEL_MENU, bass:BASS_MENU, step:0.34, wave:"triangle"};
   if(state.screen === "game" && state.boss && !state.over) return {id:"boss", mel:MEL_BOSS, bass:BASS_BOSS, step: bossEnraged() ? 0.14 : 0.17, wave:"square"};
   if(state.screen === "game" && state.mode === "time") return {id:"time", mel:MEL, bass:BASS, step:0.19, wave:"square"};
+  /* v5.45: DUEL - track rieng nhip nhanh; bi don the bi (>=5 chu sai) -> pitch day cao + nhanh hon */
+  if(state.screen === "game" && state.mode === "duel" && !state.over){
+    const push = state.wrongSet && state.wrongSet.size >= 5;
+    return push
+      ? {id:"duelHot", mel:MEL_DUEL, bass:BASS_DUEL, step:0.15, wave:"square", tp:2}
+      : {id:"duel",    mel:MEL_DUEL, bass:BASS_DUEL, step:0.17, wave:"square"};
+  }
   /* v5.36: sap thua (con <=2 mang) -> ha 3 semitone + cham lai = nhac "lo lang" */
   if(state.screen === "game" && !state.over && state.maxM > 2 && state.misses >= state.maxM - 2 && state.misses > 0)
     return {id:"tense", mel:MEL, bass:BASS, step:0.28, wave:"square", tp:-3, tense:true};
@@ -2506,6 +2566,16 @@ function startMusic(){
       audio.step++;
     }
   }, 40);
+}
+
+/* v5.45: pha nhip nhac hien tai (0 = vua qua not, 1 = sat not ke) - dong bo hinh anh voi nhac */
+function beatPulse(){
+  try{
+    if(!audio.ctx || !audio.timer || audio.muted) return 0;
+    const tr = curTrack();
+    const rem = audio.nextT - audio.ctx.currentTime;
+    return 1 - Math.max(0, Math.min(1, rem / tr.step));
+  }catch(e){ return 0; }
 }
 
 /* ---------------- DOM JUICE ---------------- */
@@ -3142,6 +3212,13 @@ function updateKick(t){
           sfx.boing();
           hitstop(60);
           shake("md");
+          /* v5.45: PERFECT SAVE - no nang luong xanh la/lam tai diem bong dap tuong */
+          try{
+            burst(b.x1, b.y1, {count:24, spread:180, size:9, colors:["#7DFFB0","#5AB4DC","#BDE3F0","#7D9B6A"]});
+            ringPulse(b.x1, b.y1, "rgba(125,255,176,.9)", 2);
+            flashScreen("rgba(125,255,176,.22)");
+            sfx.freezeUse();
+          }catch(e){}
         } else {
           seq.phase = "impact"; seq.t0 = t;
           sfx.shatter();
@@ -3337,7 +3414,7 @@ function loop(realT){
     }
     /* v5.32: tim dap 60bpm khi con 1 mang */
     if(!state.over && !seq.active && !winSeq.active && state.misses === state.maxM - 1 &&
-       Math.floor(t/900) !== Math.floor((t-16)/900)){ try{ sfx.heart(); }catch(e){} }
+       Math.floor(t/900) !== Math.floor((t-16)/900)){ try{ sfx.heart(); shake("sm"); }catch(e){} } /* v5.45: camera dap theo nhip tim */
     drawScene(t);
   }
   requestAnimationFrame(loop);
