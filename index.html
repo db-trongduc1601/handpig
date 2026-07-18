@@ -380,6 +380,14 @@
   /* ---- v5.32: word row juice ---- */
   .slot.land{animation:slotLand .32s var(--spring);}
   @keyframes slotLand{0%{transform:scale(1.4,.6);}55%{transform:scale(.85,1.18);}100%{transform:scale(1,1);}}
+  /* v5.46: COMBO VO - slot rung rinh tat ngam anh sang */
+  #wordRow.combolost .slot{animation:slotDroop .75s ease-out;}
+  @keyframes slotDroop{
+    0%{transform:translateY(0); filter:none; opacity:1;}
+    28%{transform:translateY(8px) rotate(2.5deg); filter:grayscale(1) brightness(.5); opacity:.45; text-shadow:none;}
+    55%{transform:translateY(5px) rotate(-1.5deg); filter:grayscale(.7) brightness(.7); opacity:.6;}
+    100%{transform:none; filter:none; opacity:1;}
+  }
   #wordRow.danger .slot{border-bottom-color:var(--bad); animation:dangerShake .7s linear infinite;}
   @keyframes dangerShake{0%,100%{transform:translate(0,0);}20%{transform:translate(-1.5px,1px);}40%{transform:translate(1.5px,-1px);}60%{transform:translate(-1px,0);}80%{transform:translate(1px,1px);}}
   body.fever .slot{color:var(--gold); animation:feverWave 1.1s ease-in-out infinite; animation-delay:calc(var(--si,0)*.09s); text-shadow:0 0 10px rgba(201,162,39,.7);}
@@ -533,6 +541,33 @@
   @keyframes shockOut{0%{transform:translate(-50%,-50%) scale(.1); opacity:1;}100%{transform:translate(-50%,-50%) scale(1); opacity:0;}}
   #sceneWrap.knockback #scene{animation:kbBack .5s var(--spring);}
   @keyframes kbBack{0%{transform:translateX(0);}30%{transform:translateX(-16px);}100%{transform:translateX(0);}}
+  /* ==== v5.46: PORTAL / DIMENSION SHIFT - dau truong doi chieu khong gian ==== */
+  #sceneWrap.cosmic #scene{animation:cosmicHue 7s linear infinite;}
+  @keyframes cosmicHue{
+    0%{filter:hue-rotate(0deg) saturate(1.2);}
+    50%{filter:hue-rotate(200deg) saturate(1.5) brightness(1.06);}
+    100%{filter:hue-rotate(360deg) saturate(1.2);}
+  }
+  #sceneWrap.cosmic::before{
+    content:""; position:absolute; inset:0; z-index:4; pointer-events:none; border-radius:16px;
+    background-image:
+      radial-gradient(1.6px 1.6px at 12% 18%, rgba(255,255,255,.95), transparent 60%),
+      radial-gradient(1.2px 1.2px at 28% 64%, rgba(190,216,255,.9), transparent 60%),
+      radial-gradient(2px 2px at 44% 30%, rgba(255,246,201,.9), transparent 60%),
+      radial-gradient(1.3px 1.3px at 58% 76%, rgba(255,255,255,.85), transparent 60%),
+      radial-gradient(1.8px 1.8px at 71% 22%, rgba(220,180,255,.9), transparent 60%),
+      radial-gradient(1.2px 1.2px at 84% 55%, rgba(190,216,255,.9), transparent 60%),
+      radial-gradient(1.6px 1.6px at 92% 12%, rgba(255,255,255,.9), transparent 60%),
+      radial-gradient(1.4px 1.4px at 6% 84%, rgba(255,246,201,.85), transparent 60%),
+      radial-gradient(2px 2px at 63% 8%, rgba(255,255,255,.8), transparent 60%),
+      radial-gradient(1.2px 1.2px at 37% 88%, rgba(220,180,255,.85), transparent 60%);
+    animation:starTwinkle 2.4s ease-in-out infinite;
+  }
+  @keyframes starTwinkle{0%,100%{opacity:.55;}50%{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){
+    #sceneWrap.cosmic #scene{animation:none;}
+    #sceneWrap.cosmic::before{animation:none;}
+  }
   /* ==== v5.43: BOSS ROUND AMBIENT - ca man choi nhuom khong khi tran boss ==== */
   body.bossRound #sceneWrap{
     animation:bossScenePulse 1.8s ease-in-out infinite;
@@ -2418,6 +2453,22 @@ const sfx = {
   heart(){ const t = now(); tone("sine",75,40,t,0.1,0.28); tone("sine",65,35,t+0.16,0.12,0.2); },
   /* v5.38: SUB-BASS DROP - sine 45Hz -> 10Hz trong 0.5s, no vang moi khi boss ra chieu */
   subDrop(){ const t = now(); tone("sine", 45, 10, t, 0.5, 0.42); noise(t, 0.1, 0.08, 60); },
+  /* v5.46: RECORD SCRATCH - dia than xuoc khi vo combo (noise sweep + pitch drop) */
+  scratch(){
+    const t = now();
+    noise(t, 0.16, 0.28, 2600);
+    noise(t + 0.14, 0.12, 0.2, 1400);
+    tone("sawtooth", 950, 70, t, 0.32, 0.12);
+    tone("square", 520, 55, t + 0.05, 0.26, 0.07);
+    tone("sine", 90, 32, t + 0.1, 0.3, 0.2); /* hut hang */
+  },
+  /* v5.46: PORTAL - vut xoay chieu khong gian */
+  portal(){
+    const t = now(), E = echoDest();
+    fmTone("sine", 280, 920, 6, 130, t, 0.65, 0.1, E);
+    tone("sine", 140, 620, t, 0.5, 0.07, E);
+    tone("triangle", 1200, 2400, t + 0.15, 0.3, 0.04, E);
+  },
   /* ---- v5.30: TIENG RIENG 10 BOSS ---- */
   bossVoice(id, pm){
     const m = pm || 1, t = now();
@@ -2568,6 +2619,24 @@ function startMusic(){
   }, 40);
 }
 
+/* ==== v5.46: PORTAL / DIMENSION SHIFT ==== */
+const dimShift = { until: 0 };
+function updateDimShift(){
+  try{
+    const w = $("sceneWrap"); if(!w) return;
+    const on = state.screen === "game" && !reduced() && settings.parts &&
+      (performance.now() < dimShift.until || (state.streak >= 8 && !state.over));
+    const was = w.classList.contains("cosmic");
+    if(on && !was){
+      w.classList.add("cosmic");
+      flashScreen("rgba(140,60,255,.3)");
+      try{ const c = center(w); ringPulse(c.x, c.y, "rgba(160,100,255,.9)", 2); }catch(e){}
+      try{ sfx.portal(); }catch(e){}
+      try{ const c2 = center(w); floatText(c2.x, c2.y - 70, "🌀 DIMENSION SHIFT!", "#B45AFF", 20); }catch(e){}
+    } else if(!on && was){ w.classList.remove("cosmic"); }
+  }catch(e){}
+}
+
 /* v5.45: pha nhip nhac hien tai (0 = vua qua not, 1 = sat not ke) - dong bo hinh anh voi nhac */
 function beatPulse(){
   try{
@@ -2623,6 +2692,18 @@ function keyRipple(keyEl){
   r.addEventListener("animationend", ()=> r.remove());
   setTimeout(()=>{ if(r.parentNode) r.remove(); }, 600);
 }
+/* v5.46: COMBO BREAK "vo mong" - dia xuoc + slot tat ngam */
+function comboBreakFx(lost){
+  if(reduced()) return;
+  try{
+    const wr = $("wordRow");
+    wr.classList.remove("combolost"); void wr.offsetWidth; wr.classList.add("combolost");
+    setTimeout(()=>{ try{ wr.classList.remove("combolost"); }catch(e){} }, 850);
+    const c = center(wr);
+    floatText(c.x, c.y + 34, "💔 COMBO VỠ x" + lost + "!", "#8A8578", 19);
+  }catch(e){}
+}
+
 /* v5.38: khoi hat dung chung - cls "gray" = khoi xam (cao), mac dinh = khoi do */
 function smokeAt(x, y, n, cls){
   if(reduced() || !settings.parts) return;
@@ -3407,6 +3488,7 @@ function loop(realT){
     if(winSeq.active) updateWinSeq(t);
     if(state.mode === "time") updateTA();
     updateFever(t);
+    updateDimShift(); /* v5.46 */
     /* doze off after 20s idle */
     if(!seq.active && !winSeq.active && !state.over && state.lastInput &&
        performance.now() - state.lastInput > 20000){
@@ -4477,6 +4559,7 @@ function handleWin(){
     bossFx._db1 = false; bossFx._db2 = false;
     if(!reduced()) cBurst(BOSS_X + 5*BOSS_S, BOSS_Y + 5*BOSS_S, {count:30, speed:3.6, up:2.2, size:5, colors:["#C05B41","#C9A227","#F0EEE6"]});
     feverStart(); /* thang boss -> vao thang FEVER */
+    dimShift.until = performance.now() + 6000; /* v5.46: ha boss -> mo cong khong gian 6s */
     pig.x = pig.homeX; /* tra pig ve cho cu truoc win seq */
   }
   if(state.mode !== "time" && [5,10,15,20].indexOf(state.streak) !== -1){
@@ -4607,12 +4690,17 @@ function guess(L){
       renderAll();
       return;
     }
+    const prevCombo = state.combo; /* v5.46 */
     state.wrongSet.add(L);
     state.history.push(0);
     state.combo = 0;
     sfx.bad(keyPan);
     sfx.oink(0.7, 1);
     keySmoke(keyEl); /* v5.37: boc khoi do khi sai */
+    /* v5.46: dang chuoi ngon ma sai -> "vo mong" (dia xuoc + slot tat ngam) */
+    if(prevCombo >= 3 || state.streak >= 4){
+      try{ sfx.scratch(); comboBreakFx(Math.max(prevCombo, state.streak)); }catch(e){}
+    }
     if(state.mode === "time"){
       ta.left -= 4;
       const cc = center($("sceneWrap"));
