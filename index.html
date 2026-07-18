@@ -141,6 +141,53 @@
     font-family:"Courier New",monospace; font-size:10px; letter-spacing:1px;
     background:var(--gold); color:#fff; border-radius:6px; padding:2px 7px;
   }
+  /* v5.41: minimap duong toi boss | v5.43: NOI BAT han len */
+  #bossMap{
+    display:flex; align-items:center;
+    border-color:var(--gold) !important;
+    box-shadow:0 0 8px rgba(201,162,39,.35), 0 1px 4px rgba(61,57,41,.06) !important;
+  }
+  .bmWrap{display:inline-flex; align-items:center; gap:5px;}
+  .bmLbl{
+    font-family:"Courier New",monospace; font-size:10px; font-weight:bold;
+    letter-spacing:1px; color:var(--gold); margin-right:2px;
+  }
+  .bmDot{
+    width:12px; height:12px; border-radius:50%; border:2px solid var(--line);
+    background:transparent; transition:border-color .3s;
+  }
+  .bmDot.on{
+    background:radial-gradient(circle at 35% 30%, #F2DC7E, var(--gold) 65%);
+    border-color:var(--gold);
+    box-shadow:0 0 7px 1px rgba(201,162,39,.8);
+    animation:bmPop .4s var(--spring);
+  }
+  @keyframes bmPop{0%{transform:scale(.3);}55%{transform:scale(1.45);}100%{transform:scale(1);}}
+  .bmIcon{font-size:20px; line-height:1; filter:grayscale(1); opacity:.5; display:inline-block; transition:opacity .3s;}
+  /* du 3/4: chip do ruc, giat nhip tim dap */
+  #bossMap.ready{
+    border-color:var(--bad) !important;
+    background:rgba(192,60,40,.12) !important;
+    box-shadow:0 0 14px 3px rgba(192,60,40,.55) !important;
+    animation:bmChipBeat .55s ease-in-out infinite;
+  }
+  @keyframes bmChipBeat{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+  #bossMap.ready .bmLbl{color:var(--bad); animation:armedPulse .5s infinite;}
+  #bossMap.ready .bmDot.on{
+    background:radial-gradient(circle at 35% 30%, #F0A08C, var(--bad) 65%);
+    border-color:var(--bad); box-shadow:0 0 9px 2px rgba(192,60,40,.9);
+  }
+  #bossMap.ready .bmIcon{filter:none; opacity:1; font-size:22px; animation:bmShake .45s linear infinite;}
+  @keyframes bmShake{0%,100%{transform:rotate(0) scale(1);}25%{transform:rotate(-16deg) scale(1.15);}75%{transform:rotate(16deg) scale(1.15);}}
+  /* dang dau boss */
+  #bossMap.fight{
+    border-color:var(--bad) !important;
+    background:var(--bad) !important;
+    box-shadow:0 0 16px 4px rgba(192,60,40,.6) !important;
+  }
+  #bossMap.fight .bmLbl{color:#fff;}
+  #bossMap.fight .bmDot{background:#fff; border-color:#fff; box-shadow:none;}
+  #bossMap.fight .bmIcon{filter:none; opacity:1; font-size:22px; animation:armedPulse .5s infinite;}
   #muteBtn{
     margin-left:auto; background:none; border:1px solid var(--line); border-radius:8px;
     padding:6px 11px; cursor:pointer; font-size:15px;
@@ -197,13 +244,40 @@
   }
   #viHintLine.hidden{display:none;}
 
-  #kb{display:flex; flex-direction:column; gap:8px; align-items:center;}
+  #kb{display:flex; flex-direction:column; gap:8px; align-items:center; position:relative; z-index:1;} /* v5.38: z-index cho sigil duoi + scanline */
   .kbRow{display:flex; gap:7px;}
   .key{
     width:56px; height:52px; border-radius:10px; border:1px solid var(--line);
     background:var(--card); color:var(--ink); font-family:"Courier New",monospace;
     font-size:20px; font-weight:bold; cursor:pointer; transform-origin:50% 100%;
     transition:transform .15s var(--spring), background .1s, border-color .1s, filter .3s, opacity .3s;
+    position:relative; overflow:hidden; /* v5.37: chua ripple */
+  }
+  /* v5.37: ripple song lan toa khi bam phim */
+  .kripple{
+    position:absolute; left:50%; top:50%; width:8px; height:8px; border-radius:50%;
+    background:rgba(217,119,87,.45); pointer-events:none; transform:translate(-50%,-50%) scale(0);
+    animation:kRipple .45s ease-out forwards;
+  }
+  @keyframes kRipple{
+    0%{transform:translate(-50%,-50%) scale(0); opacity:.9;}
+    100%{transform:translate(-50%,-50%) scale(14); opacity:0;}
+  }
+  /* v5.37: khoi do boc len tu phim sai */
+  .fx-smoke{
+    position:fixed; z-index:70; pointer-events:none; border-radius:50%;
+    background:radial-gradient(circle, rgba(192,91,65,.75) 0%, rgba(192,91,65,.25) 60%, transparent 100%);
+    animation:smokeUp var(--sdur,.6s) ease-out forwards;
+  }
+  @keyframes smokeUp{
+    0%{transform:translate(0,0) scale(.5); opacity:.9;}
+    100%{transform:translate(var(--sdx,0), -46px) scale(2.2); opacity:0;}
+  }
+  /* v5.37: hat lap lanh (sparkle) tai slot */
+  .fx-p.spark{
+    border-radius:50%;
+    background:radial-gradient(circle, #FFF6C9 0%, #E7C24A 60%, #C9A227 100%) !important;
+    box-shadow:0 0 6px 2px rgba(231,194,74,.85);
   }
   /* v5.27: boss keyboard gimmicks | v5.29: du 10 boss | v5.30: anim manh hon */
   .key.venom{animation:venomPulse 1s ease-in-out infinite;}
@@ -219,7 +293,7 @@
   @keyframes poofOut{0%{transform:scale(1) rotate(0); opacity:1; visibility:visible;}100%{transform:scale(.1) rotate(40deg); opacity:0; visibility:hidden;}}
   .key.pawed{background:#6B4A2B; border-color:#8A5D36; color:rgba(255,255,255,.5); cursor:not-allowed; animation:pawSlam .35s var(--spring);}
   @keyframes pawSlam{0%{transform:scale(1.7); box-shadow:0 8px 18px rgba(0,0,0,.4);}55%{transform:scale(.8);}100%{transform:scale(1);}}
-  .key.bitten{background:none; border-style:dashed; border-color:var(--bad); color:var(--bad); opacity:.55; cursor:not-allowed; animation:biteChomp .32s linear;}
+  .key.bitten{background:none; border-style:dashed; border-color:var(--bad); color:var(--bad); opacity:.55; cursor:not-allowed; animation:keyChomp .55s linear;} /* v5.38: dut lam doi roi hoi phuc */
   @keyframes biteChomp{0%{transform:scale(1);}30%{transform:scale(.55) rotate(7deg);}60%{transform:scale(1.15) rotate(-5deg);}100%{transform:scale(1);}}
   .key.burnt{background:#2A211C; border-color:#C05B41; color:#C05B41; cursor:not-allowed; animation:burnFlick .45s linear infinite;}
   @keyframes burnFlick{
@@ -238,10 +312,22 @@
   .key:hover:not(:disabled){transform:translateY(-2px); border-color:var(--accent);}
   .key:active:not(:disabled){transform:scale(1.12,.82);}
   .key:disabled{cursor:default;}
-  .key.ok{background:var(--good); border-color:var(--good); color:#fff; animation:keyPop .35s var(--spring);}
+  /* v5.37: phim dung = neon xanh la pulse */
+  .key.ok{background:var(--good); border-color:#39FF14; color:#fff; animation:keyPop .35s var(--spring), neonGreen 1s ease-out;}
   @keyframes keyPop{0%{transform:scale(1);}40%{transform:scale(1.2,.85);}70%{transform:scale(.95,1.08);}100%{transform:scale(1);}}
-  .key.no{background:var(--bad); border-color:var(--bad); color:#fff; opacity:.85; animation:keyNo .35s linear;}
-  @keyframes keyNo{0%,100%{transform:none;}25%{transform:translateX(-5px);}50%{transform:translateX(5px);}75%{transform:translateX(-3px);}}
+  @keyframes neonGreen{
+    0%{box-shadow:0 0 4px 1px rgba(57,255,20,.9), 0 0 14px 4px rgba(57,255,20,.55); text-shadow:0 0 8px rgba(57,255,20,.95);}
+    50%{box-shadow:0 0 10px 3px rgba(57,255,20,.7), 0 0 24px 8px rgba(57,255,20,.35); text-shadow:0 0 12px rgba(57,255,20,.8);}
+    100%{box-shadow:0 0 2px 0 rgba(57,255,20,0); text-shadow:none;}
+  }
+  /* v5.37: phim sai = rung ngang du doi */
+  .key.no{background:var(--bad); border-color:var(--bad); color:#fff; opacity:.85; animation:keyNo .4s linear;}
+  @keyframes keyNo{
+    0%,100%{transform:none;}
+    12%{transform:translateX(-9px) rotate(-2deg);} 25%{transform:translateX(9px) rotate(2deg);}
+    38%{transform:translateX(-8px);} 50%{transform:translateX(8px);}
+    62%{transform:translateX(-6px);} 75%{transform:translateX(5px);} 88%{transform:translateX(-3px);}
+  }
   @media (max-width:640px){
     .key{width:9vw; height:11vw; font-size:4.4vw; border-radius:8px;}
     #logo{font-size:42px;}
@@ -313,6 +399,359 @@
     18%{transform:translateX(-50%); opacity:1;}
     78%{transform:translateX(-50%); opacity:1;}
     100%{transform:translateX(-120vw); opacity:0;}
+  }
+  /* ==== v5.38: MEGA BOSS FX (cinematic) ==== */
+  /* WOLF: suong mu troi khap man hinh */
+  .bossFog{
+    position:fixed; inset:-20%; z-index:64; pointer-events:none; opacity:0;
+    background:
+      radial-gradient(ellipse 42% 30% at 25% 38%, rgba(205,205,215,.55), transparent 70%),
+      radial-gradient(ellipse 52% 36% at 72% 58%, rgba(165,165,180,.5), transparent 70%),
+      radial-gradient(ellipse 46% 32% at 45% 82%, rgba(190,190,200,.45), transparent 70%);
+    filter:blur(7px);
+    animation:fogDrift 2.6s ease-in-out forwards;
+  }
+  @keyframes fogDrift{
+    0%{opacity:0; transform:translateX(-6%) scale(1.05);}
+    20%{opacity:.9;} 75%{opacity:.75;}
+    100%{opacity:0; transform:translateX(7%) scale(1.12);}
+  }
+  /* FOX: bong cao chop tat o nen san dau */
+  #sceneWrap.foxFlicker::after{
+    content:""; position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:16px;
+    background:radial-gradient(ellipse 30% 48% at 68% 60%, rgba(15,12,9,.8), transparent 68%);
+    animation:foxBlink .32s steps(2) 7;
+  }
+  @keyframes foxBlink{0%,100%{opacity:0;}50%{opacity:1;}}
+  .fx-smoke.gray{background:radial-gradient(circle, rgba(150,145,135,.85) 0%, rgba(120,115,105,.3) 60%, transparent 100%);}
+  /* BEAR: vet nut do phat sang lan tu goc boss */
+  .bossCrackWrap{position:fixed; inset:0; z-index:66; pointer-events:none; animation:crackFade 1.5s ease-out forwards;}
+  @keyframes crackFade{0%{opacity:0;}10%{opacity:1;}70%{opacity:1;}100%{opacity:0;}}
+  .bossCrack{
+    position:absolute; height:3px; border-radius:2px; transform-origin:0 50%;
+    background:linear-gradient(90deg, rgba(255,90,55,.95), rgba(200,45,28,.65) 65%, transparent);
+    box-shadow:0 0 8px 2px rgba(255,75,45,.85), 0 0 24px 7px rgba(200,45,28,.45);
+    animation:crackGrow .3s cubic-bezier(.2,.9,.3,1) forwards;
+  }
+  @keyframes crackGrow{from{transform:rotate(var(--ca)) scaleX(0);}to{transform:rotate(var(--ca)) scaleX(1);}}
+  /* EAGLE: loc long vu + UI nghieng */
+  .fx-feather{
+    position:fixed; z-index:66; pointer-events:none; border-radius:60% 40% 60% 40%;
+    background:linear-gradient(120deg, #F5F3EC, #C9C3B0);
+    box-shadow:0 1px 4px rgba(0,0,0,.18);
+    animation:featherSweep var(--fdur,1.6s) linear forwards;
+  }
+  @keyframes featherSweep{
+    0%{transform:translate(0,0) rotate(0deg); opacity:0;}
+    8%{opacity:1;}
+    100%{transform:translate(var(--fdx,-110vw), var(--fdy,26vh)) rotate(var(--frot,720deg)); opacity:0;}
+  }
+  #app.gale{animation:appGale 1.7s var(--spring);}
+  @keyframes appGale{0%,100%{transform:rotate(0);}22%{transform:rotate(-1.4deg) translateX(-9px);}58%{transform:rotate(.8deg) translateX(6px);}}
+  /* SNAKE: phim chay xe nhu bi axit an mon */
+  .key.melt{animation:keyMelt 2.4s ease-in forwards;}
+  @keyframes keyMelt{
+    0%{transform:none; border-radius:10px; filter:blur(0) saturate(1);}
+    35%{transform:scaleY(1.06) skewX(-3deg); border-radius:10px 10px 24px 18px; filter:blur(.6px) saturate(1.15) hue-rotate(30deg);}
+    100%{transform:scaleY(1.2) skewX(-7deg) translateY(5px); border-radius:8px 8px 36px 28px; filter:blur(1.7px) saturate(.65) hue-rotate(60deg); opacity:.78;}
+  }
+  /* SHARK: song nuoc cuon tran man hinh */
+  .bossWave{
+    position:fixed; left:-4vw; right:-4vw; bottom:-12vh; height:52vh; z-index:64; pointer-events:none;
+    background:
+      radial-gradient(ellipse 55% 42% at 28% 18%, rgba(130,200,235,.6), transparent 70%),
+      radial-gradient(ellipse 60% 46% at 72% 28%, rgba(95,165,210,.55), transparent 70%),
+      linear-gradient(to top, rgba(55,125,178,.6), rgba(90,170,215,.3) 55%, transparent);
+    border-radius:48% 52% 0 0 / 26% 30% 0 0;
+    animation:waveRoll 1.7s ease-in-out forwards;
+  }
+  @keyframes waveRoll{
+    0%{transform:translateY(62vh) scaleY(.6) rotate(-1deg);}
+    35%{transform:translateY(-5vh) scaleY(1.08) rotate(.6deg);}
+    62%{transform:translateY(2vh) scaleY(.96) rotate(-.4deg);}
+    100%{transform:translateY(64vh) scaleY(.7) rotate(0);}
+  }
+  /* SHARK v5.38: cu dop can phim dut lam doi roi tu hoi phuc (thay biteChomp) */
+  @keyframes keyChomp{
+    0%{clip-path:inset(0 0 0 0); transform:none;}
+    22%{clip-path:polygon(0 0,100% 0,100% 40%,0 58%); transform:translate(-2px,-4px) rotate(-5deg);}
+    52%{clip-path:polygon(0 44%,100% 60%,100% 100%,0 100%); transform:translate(2px,5px) rotate(4deg);}
+    80%{clip-path:inset(0 0 0 0); transform:scale(1.08,.9);}
+    100%{clip-path:inset(0 0 0 0); transform:none;}
+  }
+  /* ROBOT: ma tran hat xanh la roi + kb nhieu soc ngang */
+  .mtxCol{
+    position:fixed; top:-32vh; z-index:64; pointer-events:none;
+    color:#3AFF6E; font-family:"Courier New",monospace; font-weight:bold;
+    writing-mode:vertical-rl; text-orientation:upright; letter-spacing:2px;
+    text-shadow:0 0 7px rgba(58,255,110,.9); opacity:.85;
+    animation:mtxFall var(--mdur,1.4s) linear forwards;
+  }
+  @keyframes mtxFall{from{transform:translateY(0);}to{transform:translateY(165vh); opacity:0;}}
+  #kb.scan::after{
+    content:""; position:absolute; inset:-4px; z-index:5; pointer-events:none;
+    background:repeating-linear-gradient(to bottom, rgba(58,255,110,.16) 0 2px, transparent 2px 6px);
+    animation:scanShift 1.9s linear forwards;
+  }
+  @keyframes scanShift{0%{transform:translateY(-10px); opacity:1;}100%{transform:translateY(10px); opacity:0;}}
+  /* WITCH: vong tron ma thuat xoay duoi ban phim */
+  .witchSigil{
+    position:fixed; z-index:0; pointer-events:none; border-radius:50%;
+    border:2px solid rgba(190,125,255,.9);
+    box-shadow:0 0 20px 5px rgba(160,80,255,.55), inset 0 0 26px 7px rgba(160,80,255,.35);
+    background:radial-gradient(circle, rgba(120,60,200,.14) 30%, transparent 72%);
+    animation:sigilSpin 1.6s ease-in-out forwards;
+  }
+  .witchSigil::before{content:""; position:absolute; inset:11%; border-radius:50%; border:1.5px dashed rgba(215,165,255,.85);}
+  .witchSigil::after{
+    content:"✦ ✧ ✦ ✧ ✦ ✧"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:rgba(225,185,255,.95); font-size:19px; letter-spacing:9px;
+    text-shadow:0 0 9px rgba(160,80,255,.95);
+  }
+  @keyframes sigilSpin{
+    0%{opacity:0; transform:scale(.35) rotate(0);}
+    22%{opacity:1;}
+    80%{opacity:1;}
+    100%{opacity:0; transform:scale(1.18) rotate(330deg);}
+  }
+  /* DRAGON: man do ruc + khong khi bien dang vi nhiet */
+  .dragonHeat{
+    position:fixed; inset:0; z-index:64; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 72%, rgba(255,95,40,.36), rgba(165,25,10,.24) 58%, rgba(120,10,5,.32));
+    animation:heatFlash 1.5s ease-out forwards;
+  }
+  @keyframes heatFlash{0%{opacity:0;}14%{opacity:1;}68%{opacity:.8;}100%{opacity:0;}}
+  #sceneWrap.heatwave{filter:url(#heatWave);}
+  /* BOAR: vong song xung kich + day lui nhan vat */
+  .shockRing{
+    position:fixed; z-index:66; pointer-events:none; border-radius:50%;
+    border:3px solid rgba(255,205,155,.9);
+    box-shadow:0 0 16px 4px rgba(217,119,87,.65), inset 0 0 12px 3px rgba(217,119,87,.45);
+    transform:translate(-50%,-50%) scale(.1);
+    animation:shockOut .7s cubic-bezier(.2,.8,.3,1) forwards;
+  }
+  @keyframes shockOut{0%{transform:translate(-50%,-50%) scale(.1); opacity:1;}100%{transform:translate(-50%,-50%) scale(1); opacity:0;}}
+  #sceneWrap.knockback #scene{animation:kbBack .5s var(--spring);}
+  @keyframes kbBack{0%{transform:translateX(0);}30%{transform:translateX(-16px);}100%{transform:translateX(0);}}
+  /* ==== v5.43: BOSS ROUND AMBIENT - ca man choi nhuom khong khi tran boss ==== */
+  body.bossRound #sceneWrap{
+    animation:bossScenePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes bossScenePulse{
+    0%,100%{box-shadow:0 0 16px 2px rgba(192,60,40,.35), 0 4px 14px rgba(61,57,41,.14);}
+    50%{box-shadow:0 0 32px 8px rgba(192,60,40,.6), 0 4px 14px rgba(61,57,41,.14);}
+  }
+  body.bossRound::after{
+    content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(120,20,10,.2) 100%);
+    animation:bossAmbPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes bossAmbPulse{0%,100%{opacity:.7;}50%{opacity:1;}}
+  /* cuong no: do ruc + nhanh gap doi */
+  body.bossRound.enraged #sceneWrap{animation:bossScenePulse .8s ease-in-out infinite;}
+  body.bossRound.enraged::after{
+    background:radial-gradient(ellipse at 50% 42%, transparent 44%, rgba(150,15,5,.34) 100%);
+    animation:bossAmbPulse .9s ease-in-out infinite;
+  }
+  /* v5.43: khung vien man hinh chop mau rieng tung boss moi don */
+  .bossEdge{
+    position:fixed; inset:0; z-index:67; pointer-events:none;
+    box-shadow:inset 0 0 46px 14px var(--bec, rgba(192,60,40,.55));
+    animation:bossEdgeFlash .9s ease-out forwards;
+  }
+  @keyframes bossEdgeFlash{0%{opacity:0;}14%{opacity:1;}100%{opacity:0;}}
+  @media (prefers-reduced-motion: reduce){
+    body.bossRound #sceneWrap, body.bossRound::after{animation:none;}
+    .bossEdge{display:none;}
+  }
+  /* ==== v5.39: CINEMATIC LAYER 2 ==== */
+  /* letterbox 2 thanh den kieu phim */
+  .cineBar{
+    position:fixed; left:0; right:0; height:7vh; z-index:68; pointer-events:none;
+    background:linear-gradient(to bottom, #0A0908, #14110E);
+    transition:transform .45s cubic-bezier(.2,.8,.3,1);
+  }
+  .cineBar.top{top:0; transform:translateY(-102%);}
+  .cineBar.bottom{bottom:0; transform:translateY(102%); background:linear-gradient(to top, #0A0908, #14110E);}
+  .cineBar.in{transform:translateY(0);}
+  /* vignette toi 4 goc khi boss ra don */
+  .bossVig{
+    position:fixed; inset:0; z-index:63; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(5,4,3,.68) 100%);
+    animation:vigPulse 1.5s ease-out forwards;
+  }
+  @keyframes vigPulse{0%{opacity:0;}18%{opacity:1;}72%{opacity:.85;}100%{opacity:0;}}
+  /* fox: vet luot cam (afterimage dash) */
+  .foxDash{
+    position:fixed; height:4px; z-index:65; pointer-events:none; border-radius:3px;
+    background:linear-gradient(90deg, transparent, rgba(232,122,60,.95), transparent);
+    box-shadow:0 0 12px 3px rgba(232,122,60,.5);
+    animation:foxDashSweep .55s ease-in forwards;
+  }
+  @keyframes foxDashSweep{0%{transform:translateX(0); opacity:0;}15%{opacity:1;}100%{transform:translateX(-72vw); opacity:0;}}
+  /* bear: da roi tu tren xuong */
+  .fx-rock{
+    position:fixed; z-index:66; pointer-events:none; background:#6B5A43; border-radius:2px;
+    box-shadow:inset -2px -2px 0 rgba(0,0,0,.3);
+    animation:rockFall var(--rdur,.9s) cubic-bezier(.3,0,.8,.4) forwards;
+  }
+  @keyframes rockFall{0%{transform:translateY(-8vh) rotate(0); opacity:1;}100%{transform:translateY(112vh) rotate(var(--rrot,220deg)); opacity:.9;}}
+  /* eagle: lan gio trang quet ngang */
+  .windLine{
+    position:fixed; height:2px; z-index:65; pointer-events:none;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.9), transparent);
+    animation:windSweep var(--wdur,.8s) linear forwards;
+  }
+  @keyframes windSweep{0%{transform:translateX(24vw); opacity:0;}12%{opacity:1;}100%{transform:translateX(-125vw); opacity:0;}}
+  /* snake: giot noc doc nho xuong ban phim */
+  .venomDrip{
+    position:fixed; width:6px; z-index:65; pointer-events:none; border-radius:0 0 6px 6px;
+    background:linear-gradient(to bottom, rgba(125,185,90,.15), rgba(105,195,70,.95));
+    box-shadow:0 0 9px 2px rgba(105,195,70,.55);
+    transform-origin:50% 0;
+    animation:dripFall var(--ddur,.85s) cubic-bezier(.4,0,.9,.5) forwards;
+  }
+  @keyframes dripFall{0%{transform:translateY(0) scaleY(.35); opacity:0;}22%{opacity:1; transform:translateY(2vh) scaleY(1);}100%{transform:translateY(26vh) scaleY(1.3); opacity:0;}}
+  /* shark: vay ca luot ngang song */
+  .sharkFin{
+    position:fixed; z-index:65; pointer-events:none; width:0; height:0;
+    border-left:28px solid transparent; border-right:10px solid transparent;
+    border-bottom:36px solid rgba(28,52,72,.92);
+    filter:drop-shadow(0 3px 7px rgba(0,0,0,.45));
+    animation:finSweep 1.5s ease-in-out forwards;
+  }
+  @keyframes finSweep{
+    0%{transform:translateX(0) rotate(-6deg); opacity:0;}
+    12%{opacity:1;}
+    50%{transform:translateX(-44vw) rotate(4deg);}
+    86%{opacity:1;}
+    100%{transform:translateX(-88vw) rotate(-4deg); opacity:0;}
+  }
+  /* robot: man hinh giat glitch + reticle ngam do */
+  #sceneWrap.glitchScr #scene{animation:scrGlitch .5s steps(6);}
+  @keyframes scrGlitch{
+    0%,100%{transform:translate(0); filter:none;}
+    20%{transform:translate(-7px,2px) skewX(2deg); filter:hue-rotate(90deg);}
+    40%{transform:translate(6px,-2px);}
+    60%{transform:translate(-5px,1px) skewX(-2deg); filter:hue-rotate(-60deg);}
+    80%{transform:translate(4px,-1px);}
+  }
+  .lockRet{
+    position:fixed; z-index:67; pointer-events:none; border-radius:6px;
+    border:2px solid rgba(255,64,64,.95);
+    box-shadow:0 0 12px 3px rgba(255,64,64,.5), inset 0 0 8px 1px rgba(255,64,64,.4);
+    animation:retLock .75s cubic-bezier(.2,.9,.3,1) forwards;
+  }
+  @keyframes retLock{0%{transform:scale(2.6); opacity:0;}30%{opacity:1;}65%{transform:scale(1);}100%{transform:scale(1.06); opacity:0;}}
+  /* ember/rune bay len (dragon, witch) */
+  .fx-ember{position:fixed; z-index:65; pointer-events:none; border-radius:50%; animation:emberUp var(--edur,1.8s) ease-out forwards;}
+  .fx-rune{position:fixed; z-index:65; pointer-events:none; font-size:17px; font-weight:bold; text-shadow:0 0 9px currentColor; animation:emberUp var(--edur,1.8s) ease-out forwards;}
+  @keyframes emberUp{0%{transform:translate(0,0) rotate(0); opacity:0;}12%{opacity:1;}100%{transform:translate(var(--edx,0), -54vh) rotate(var(--erot,0deg)); opacity:0;}}
+  /* boar: zoom punch toan man */
+  #app.zoomPunch{animation:zoomPunch .45s var(--spring);}
+  @keyframes zoomPunch{0%{transform:scale(1);}30%{transform:scale(1.035);}100%{transform:scale(1);}}
+  /* ==== v5.40: KB ZONE FX - hieu ung ngay tren/duoi ban phim cho 8 boss (nhu sigil witch) ==== */
+  .kbZone{position:fixed; z-index:2; pointer-events:none; border-radius:14px;}
+  /* WOLF: suong mu cuon qua ban phim */
+  .kbZone.kbFogZ{
+    background:
+      radial-gradient(ellipse 60% 55% at 28% 40%, rgba(200,200,215,.55), transparent 70%),
+      radial-gradient(ellipse 55% 50% at 72% 62%, rgba(170,170,185,.5), transparent 70%);
+    filter:blur(5px);
+    animation:kbFogRoll 2.4s ease-in-out forwards;
+  }
+  @keyframes kbFogRoll{0%{opacity:0; transform:translateX(-8%);}20%{opacity:.95;}72%{opacity:.75;}100%{opacity:0; transform:translateX(9%);}}
+  /* FOX: dau chan cao chay ngang ban phim */
+  .kbPaw{
+    position:fixed; z-index:2; pointer-events:none; font-size:21px; opacity:0;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)) sepia(.6) saturate(2) hue-rotate(-15deg);
+    animation:pawPop .85s ease-out forwards;
+  }
+  @keyframes pawPop{
+    0%{opacity:0; transform:scale(.4) rotate(var(--pr,0deg));}
+    25%{opacity:.95; transform:scale(1.15) rotate(var(--pr,0deg));}
+    60%{opacity:.85;}
+    100%{opacity:0; transform:scale(1) rotate(var(--pr,0deg));}
+  }
+  /* SNAKE: vung axit loang sui bot duoi ban phim */
+  .kbZone.acidPool{
+    z-index:0;
+    background:radial-gradient(ellipse at 50% 60%, rgba(105,195,70,.5), rgba(80,160,50,.25) 58%, transparent 76%);
+    box-shadow:0 0 22px 6px rgba(105,195,70,.35);
+    filter:blur(2px);
+    animation:acidBub 2.3s ease-in-out forwards;
+  }
+  @keyframes acidBub{
+    0%{opacity:0; transform:scaleY(.6);}
+    22%{opacity:1; transform:scaleY(1);}
+    48%{transform:scaleY(.95);}
+    72%{transform:scaleY(1.05); opacity:.9;}
+    100%{opacity:0; transform:scaleY(.85);}
+  }
+  /* SHARK: song nuoc tran ngang qua ban phim */
+  .kbZone.kbWaveZ{overflow:hidden;}
+  .kbZone.kbWaveZ::before{
+    content:""; position:absolute; top:-22%; bottom:-22%; width:58%; left:112%; border-radius:44%;
+    background:linear-gradient(90deg, transparent, rgba(90,170,215,.6), rgba(125,205,240,.75));
+    box-shadow:0 0 18px 4px rgba(90,170,215,.5);
+    animation:kbWaveSweep 1.15s ease-in-out forwards;
+  }
+  @keyframes kbWaveSweep{to{left:-72%;}}
+  /* DRAGON: lua liem tu mep duoi ban phim */
+  .kbZone.kbFire{
+    background:linear-gradient(to top, rgba(255,120,40,.62), rgba(255,175,60,.3) 42%, transparent 72%);
+    filter:blur(3px); transform-origin:50% 100%;
+    animation:kbFireLick 1.55s ease-out forwards;
+  }
+  @keyframes kbFireLick{
+    0%{opacity:0; transform:translateY(28%) scaleY(.5);}
+    16%{opacity:1; transform:translateY(0) scaleY(1);}
+    42%{opacity:.92; transform:scaleY(1.08);}
+    68%{opacity:.85; transform:scaleY(.97);}
+    100%{opacity:0; transform:scaleY(.75);}
+  }
+  /* BOAR: ban phim nay bat vi cu huc */
+  #kb.quake{animation:kbQuake .6s var(--spring);}
+  @keyframes kbQuake{0%{transform:translateY(0);}25%{transform:translateY(10px);}55%{transform:translateY(-6px);}80%{transform:translateY(3px);}100%{transform:translateY(0);}}
+  /* ==== v5.44: SKILL 2 cua 10 boss ==== */
+  /* WOLF: suong ma che phim (van bam duoc) */
+  .key.misted{animation:mistPulse 1.2s ease-in-out infinite;}
+  @keyframes mistPulse{
+    0%,100%{filter:blur(2px) grayscale(.6); opacity:.62;}
+    50%{filter:blur(3.4px) grayscale(.85); opacity:.5;}
+  }
+  /* BEAR: ca ban phim bi de choang */
+  #kb.stunned{animation:kbStun 1.2s ease-out;}
+  @keyframes kbStun{0%{transform:translateY(7px) scale(.985);}70%{transform:translateY(7px) scale(.985);}100%{transform:none;}}
+  #kb.stunned .key{opacity:.55; filter:saturate(.4);}
+  /* EAGLE: long vu ghim che nhan phim (van bam duoc) */
+  .key.feathered{background:#EAF4FA; border-color:#5AB4DC; color:#3E8CB4; animation:featherStick .4s var(--spring);}
+  :root[data-theme="dark"] .key.feathered{background:#1E2E38;}
+  @keyframes featherStick{0%{transform:translateY(-16px) rotate(9deg); opacity:.3;}100%{transform:none; opacity:1;}}
+  /* WITCH: phim ma am - bay lo lung */
+  .key.hexFloat{
+    border-color:#B45AFF; color:#B45AFF;
+    box-shadow:0 0 9px rgba(180,90,255,.65);
+    animation:hexFloatKey .8s ease-in-out infinite;
+  }
+  @keyframes hexFloatKey{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-8px) rotate(3deg);}}
+  /* DRAGON: cau lua roi xuong phim */
+  .fireball{
+    position:fixed; z-index:67; pointer-events:none; width:15px; height:15px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #FFE08C, #FF7A1E 60%, #C83C10);
+    box-shadow:0 0 15px 5px rgba(255,120,30,.85);
+    animation:fireDrop var(--fbd,.5s) cubic-bezier(.4,0,.9,.5) forwards;
+  }
+  @keyframes fireDrop{0%{transform:translateY(-42vh) scale(.7); opacity:.8;}100%{transform:translateY(0) scale(1); opacity:1;}}
+  @media (prefers-reduced-motion: reduce){
+    .fireball{display:none;}
+    .key.misted,.key.hexFloat,#kb.stunned,#kb.stunned .key{animation:none;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bossFog,.bossCrackWrap,.fx-feather,.bossWave,.mtxCol,.witchSigil,.dragonHeat,.shockRing,
+    .cineBar,.bossVig,.foxDash,.fx-rock,.windLine,.venomDrip,.sharkFin,.lockRet,.fx-ember,.fx-rune,.kbZone,.kbPaw{display:none;}
+    #app.gale,#sceneWrap.knockback #scene,#sceneWrap.glitchScr #scene,#app.zoomPunch,#kb.quake{animation:none;}
+    #sceneWrap.heatwave{filter:none;}
   }
   .viewWords{
     display:inline-block; margin-top:10px; font-family:"Courier New",monospace; font-size:12px;
@@ -514,7 +953,20 @@
   body.fever .key:not(:disabled){border-color:var(--gold); box-shadow:0 0 7px rgba(201,162,39,.45);}
   body.fever #comboLbl{color:var(--gold); font-weight:bold; animation:armedPulse .55s infinite;}
   body.fever #comboBar .cseg{border-color:var(--gold);}
-  @media (prefers-reduced-motion: reduce){ body.fever #gameScreen{animation:none;} }
+  /* v5.37: FEVER - nen gradient song mau dong chay lien tuc phia sau */
+  body.fever::before{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:linear-gradient(120deg, rgba(255,60,220,.38), rgba(140,60,255,.36), rgba(255,80,180,.38), rgba(90,40,220,.32), rgba(255,60,220,.38)); /* v5.38: neon purple/pink */
+    background-size:400% 400%;
+    animation:feverBgWave 3.5s linear infinite;
+    opacity:.55;
+  }
+  @keyframes feverBgWave{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+  }
+  @media (prefers-reduced-motion: reduce){ body.fever #gameScreen{animation:none;} body.fever::before{animation:none; display:none;} }
   #comboLbl{font-family:"Courier New",monospace; font-size:9px; letter-spacing:2px; color:var(--muted);}
   #diffRow{display:flex; justify-content:center; gap:10px; margin-bottom:14px;}
   .diffChip{
@@ -622,6 +1074,7 @@
       <div class="hud" id="missesHud">MISSES: <b id="hudMisses">0/6</b></div>
       <div class="hud hidden" id="timeHud">TIME: <b id="hudTime">90s</b></div>
       <span id="longTag" class="hidden">LONG x1.5</span>
+      <div class="hud" id="bossMap" title="Đường tới boss"></div>
       <span id="bossTag" class="hidden">&#9876; BOSS</span>
       <button id="muteBtn" title="M">&#128266;</button>
     </div>
@@ -701,6 +1154,15 @@
     <button class="pbtn ghost" id="metaClose">CLOSE</button>
   </div>
 </div>
+<!-- v5.38: SVG filter - khong khi bien dang vi nhiet (dragon) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="heatWave" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="2" result="hw">
+      <animate attributeName="baseFrequency" dur="1.1s" values="0.012 0.05;0.022 0.09;0.012 0.05" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="hw" scale="14"/>
+  </filter>
+</svg>
 <canvas id="fx"></canvas>
 
 <!-- ART_DATA_SLOT: pixel-art word images go here as window.ART_IMG -->
@@ -1708,9 +2170,18 @@ function ensureAudio(){
     audio.sfxGain.connect(audio.master);
     audio.musicVol = audio.ctx.createGain();
     audio.musicVol.connect(audio.master);
+    /* v5.37: chuoi nhac = musicGain -> lowpass (tension sweep) -> xfade (crossfade track) -> musicVol */
+    audio.musicFilter = audio.ctx.createBiquadFilter();
+    audio.musicFilter.type = "lowpass";
+    audio.musicFilter.frequency.value = 18000;
+    audio.musicFilter.Q.value = 0.9;
+    audio.musicXf = audio.ctx.createGain();
+    audio.musicXf.gain.value = 1;
+    audio.musicFilter.connect(audio.musicXf);
+    audio.musicXf.connect(audio.musicVol);
     audio.musicGain = audio.ctx.createGain();
     audio.musicGain.gain.value = 1;
-    audio.musicGain.connect(audio.musicVol);
+    audio.musicGain.connect(audio.musicFilter);
     applyAudioSettings();
     startMusic();
   }
@@ -1759,53 +2230,119 @@ function noise(t0, dur, vol, hp, dest){
   node.connect(g); g.connect(dest || audio.sfxGain || audio.master); /* v5.36: dest tuy chon */
   src.start(t0);
 }
-/* v5.36: reverb ngan cho tieng boss (dry + wet convolver, cache 1 lan) */
+/* v5.37: SPATIAL - StereoPannerNode. pan(-1..1) -> node noi vao sfxGain. null neu khong ho tro */
+function spDest(pan){
+  try{
+    if(!audio.ctx || !audio.ctx.createStereoPanner || pan === undefined || pan === null) return null;
+    const p = audio.ctx.createStereoPanner();
+    p.pan.value = Math.max(-1, Math.min(1, pan));
+    p.connect(audio.sfxGain || audio.master);
+    return p;
+  }catch(e){ return null; }
+}
+/* v5.37: FEEDBACK DELAY bus (DelayNode + feedback 0.3) cho win/powerup - vang ao dieu, cache 1 lan */
+let _echoBus = null;
+function echoDest(){
+  try{
+    if(!audio.ctx) return null;
+    if(_echoBus) return _echoBus;
+    const ctx = audio.ctx;
+    const inG = ctx.createGain(); inG.gain.value = 1;
+    const dly = ctx.createDelay(1.0); dly.delayTime.value = 0.22;
+    const fb  = ctx.createGain(); fb.gain.value = 0.3;
+    const wet = ctx.createGain(); wet.gain.value = 0.35;
+    inG.connect(audio.sfxGain || audio.master);            /* dry */
+    inG.connect(dly); dly.connect(fb); fb.connect(dly);    /* feedback loop */
+    dly.connect(wet); wet.connect(audio.sfxGain || audio.master);
+    _echoBus = inG;
+    return inG;
+  }catch(e){ return null; }
+}
+/* v5.38: FM SYNTHESIS - osc dieu che tan so carrier -> gam guc/rit dien tu/cuoi ma quai */
+function fmTone(carType, carF0, carF1, modF, depth, t0, dur, vol, dest){
+  if(!audio.ctx) return;
+  try{
+    const ctx = audio.ctx;
+    const car = ctx.createOscillator(), g = ctx.createGain();
+    const mod = ctx.createOscillator(), mg = ctx.createGain();
+    car.type = carType; mod.type = "sine";
+    car.frequency.setValueAtTime(carF0, t0);
+    if(carF1 !== carF0) car.frequency.exponentialRampToValueAtTime(Math.max(carF1,1), t0+dur);
+    mod.frequency.setValueAtTime(modF, t0);
+    mg.gain.setValueAtTime(depth, t0);
+    mod.connect(mg); mg.connect(car.frequency);
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    car.connect(g); g.connect(dest || audio.sfxGain || audio.master);
+    car.start(t0); mod.start(t0);
+    car.stop(t0+dur+0.02); mod.stop(t0+dur+0.02);
+  }catch(e){}
+}
+/* v5.36: reverb ngan cho tieng boss (dry + wet convolver, cache 1 lan)
+   v5.38: DYNAMIC REVERB - wet gain x2 khi boss Cuong No (enraged) */
 let _bossVerb = null;
 function bossVerbDest(){
   try{
     if(!audio.ctx || !audio.ctx.createConvolver) return null;
-    if(_bossVerb) return _bossVerb;
+    const enr = (typeof bossEnraged === "function") && state.boss && bossEnraged();
+    if(_bossVerb){
+      try{ _bossVerb.wet.gain.value = enr ? 1.1 : 0.55; }catch(e){}
+      return _bossVerb.in;
+    }
     const ctx = audio.ctx;
     const cv = ctx.createConvolver();
-    const len = Math.floor(ctx.sampleRate * 0.35);
+    const len = Math.floor(ctx.sampleRate * 0.6); /* v5.37: tail dai hon -> boss vang & uy luc */
     const buf = ctx.createBuffer(2, len, ctx.sampleRate);
-    for(let ch=0; ch<2; ch++){ const d = buf.getChannelData(ch); for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.2); }
+    for(let ch=0; ch<2; ch++){ const d = buf.getChannelData(ch); for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.0); }
     cv.buffer = buf;
     const inG = ctx.createGain(); inG.gain.value = 1;
-    const wet = ctx.createGain(); wet.gain.value = 0.4;
+    const wet = ctx.createGain(); wet.gain.value = enr ? 1.1 : 0.55; /* v5.37: wet day hon */
     inG.connect(audio.sfxGain || audio.master);      /* dry */
     inG.connect(cv); cv.connect(wet); wet.connect(audio.sfxGain || audio.master); /* wet */
-    _bossVerb = inG;
+    _bossVerb = { in: inG, wet: wet };
     return inG;
   }catch(e){ return null; }
 }
 const now = () => audio.ctx ? audio.ctx.currentTime : 0;
 
 const sfx = {
-  click(){ tone("square", vary(880), 880, now(), 0.04, 0.06); },
+  click(pan){ tone("square", vary(880), 880, now(), 0.04, 0.06, spDest(pan)); },
   /* correct: pitch climbs with combo - you hear the streak before you count it */
-  good(combo){
+  /* v5.37: layering - click danh tan so cao + sub-bass sine cho do "punch" */
+  good(combo, pan){
+    const t = now(), D = spDest(pan);
     const base = 520 + clamp(combo,0,10) * 45;
-    tone("square", vary(base), vary(base), now(), 0.08, 0.12);
-    tone("triangle", vary(base*2), base*2, now(), 0.05, 0.03 + clamp(combo,0,10)*0.004);
+    tone("square", vary(base), vary(base), t, 0.08, 0.12, D);
+    tone("triangle", vary(base*2), base*2, t, 0.05, 0.03 + clamp(combo,0,10)*0.004, D);
+    tone("square", 2600, 2600, t, 0.018, 0.06, D);          /* click danh cao */
+    tone("sine", 70, 52, t, 0.1, 0.16, D);                  /* sub-bass punch */
   },
-  bad(){ tone("square", vary(180), 110, now(), 0.22, 0.14); },
+  /* v5.37: layering - sawtooth nghich tai (tritone) + sub-drop sau */
+  bad(pan){
+    const t = now(), D = spDest(pan);
+    tone("square", vary(180), 110, t, 0.22, 0.14, D);
+    tone("sawtooth", vary(254), 140, t, 0.2, 0.06, D);      /* tritone dissonant */
+    tone("sine", 120, 30, t, 0.3, 0.22, D);                 /* sub-drop */
+  },
   hint(){ tone("triangle", 520, 780, now(), 0.12, 0.12); this.oink(1.05, 1); },
   hop(){ tone("triangle", vary(700), 1050, now(), 0.07, 0.08); },
-  coin(){ tone("square", 988, 988, now(), 0.05, 0.08); tone("square", 1319, 1319, now()+0.05, 0.09, 0.08); },
+  coin(pan){ const D = spDest(pan); tone("square", 988, 988, now(), 0.05, 0.08, D); tone("square", 1319, 1319, now()+0.05, 0.09, 0.08, D); },
   reveal(){ const t=now(); [660,880,1174].forEach((f,i)=> tone("triangle", f, f, t+i*0.07, 0.13, 0.09)); },
   juggleTick(){ tone("square", vary(340,0.08), 340, now(), 0.03, 0.05); },
   snore(){ tone("sine", 140, 90, now(), 0.5, 0.04); tone("sawtooth", 150, 92, now(), 0.34, 0.03); },
-  powerup(){ const t=now(); [523,659,880].forEach((f,i)=>tone("square",f,f,t+i*0.06,0.09,0.1)); },
+  /* v5.37: feedback delay vang + click pan theo vi tri */
+  powerup(pan){ const t=now(); const E = echoDest(); [523,659,880].forEach((f,i)=>tone("square",f,f,t+i*0.06,0.09,0.1, E)); if(pan!==undefined && pan!==null) tone("square", 1245, 1245, t, 0.03, 0.05, spDest(pan)); tone("sine", 65, 65, t, 0.12, 0.12); },
   freezeUse(){ tone("square", 1400, 350, now(), 0.25, 0.1); tone("sine", 2100, 900, now(), 0.18, 0.05); },
   wallRise(){ tone("square", 90, 260, now(), 0.22, 0.14); },
   boing(){ duck(); tone("square", vary(200), 90, now(), 0.28, 0.2); tone("square", 400, 150, now()+0.05, 0.22, 0.12); },
   ropeSnap(){ noise(now(), 0.08, 0.25, 1800); tone("square", 1600, 2400, now(), 0.06, 0.1); },
-  thud(){ tone("sine", 130, 45, now(), 0.18, 0.3); },
+  thud(pan){ tone("sine", 130, 45, now(), 0.18, 0.3, spDest(pan)); },
   win(){
     duck();
     const t = now(); const N = [523, 659, 784, 1047, 784, 1047];
-    N.forEach((f,i)=> tone("square", f, f, t + i*0.08, 0.12, 0.11));
+    const E = echoDest(); /* v5.37: feedback delay ~0.3 -> vang ao dieu */
+    N.forEach((f,i)=> tone("square", f, f, t + i*0.08, 0.12, 0.11, E));
+    tone("sine", 62, 62, t, 0.35, 0.14); /* v5.37: sub nen */
     this.oink(1.35, 3);
   },
   kick(){ duck(); tone("sine", 170, 40, now(), 0.28, 0.5); noise(now(), 0.1, 0.2, 400); this.oink(0.62, 2); },
@@ -1831,20 +2368,24 @@ const sfx = {
   v_squeak(pm, n){ const base=760*(pm||1); const t=now(); tone("triangle",base,base*1.3,t,0.05,0.06); },
   /* v5.32: tim dap khi con 1 mang */
   heart(){ const t = now(); tone("sine",75,40,t,0.1,0.28); tone("sine",65,35,t+0.16,0.12,0.2); },
+  /* v5.38: SUB-BASS DROP - sine 45Hz -> 10Hz trong 0.5s, no vang moi khi boss ra chieu */
+  subDrop(){ const t = now(); tone("sine", 45, 10, t, 0.5, 0.42); noise(t, 0.1, 0.08, 60); },
   /* ---- v5.30: TIENG RIENG 10 BOSS ---- */
   bossVoice(id, pm){
     const m = pm || 1, t = now();
     const D = bossVerbDest(); /* v5.36: reverb -> boss nghe "to con" hon */
+    tone("sine", 52, 34, t, 0.4, 0.2, D);        /* v5.37: sub nen -> giong day, uy luc */
+    tone("sawtooth", 60, 42, t, 0.3, 0.05, D);   /* v5.37: layer detune tram */
     switch(id){
       case "wolf":  /* hu trang */ tone("sine",300*m,620*m,t,0.35,0.12,D); tone("sine",620*m,260*m,t+0.35,0.45,0.11,D); noise(t,0.25,0.03,500); break;
       case "fox":   /* yip yip */ [0,0.12].forEach(o=>{ tone("sawtooth",780*m,1150*m,t+o,0.05,0.09,D); tone("sawtooth",1150*m,700*m,t+o+0.05,0.06,0.08,D); }); break;
-      case "bear":  /* gam gu tram */ tone("sawtooth",95*m,60*m,t,0.55,0.18,D); tone("sawtooth",130*m,80*m,t+0.08,0.4,0.1,D); noise(t,0.35,0.05,120); break;
+      case "bear":  /* gam gu tram - v5.38: FM growl thuc te */ fmTone("sawtooth",72*m,48*m,27,55,t,0.6,0.16,D); tone("sawtooth",95*m,60*m,t,0.55,0.14,D); noise(t,0.35,0.05,120); break;
       case "eagle": /* ret chua */ tone("sawtooth",1500*m,950*m,t,0.22,0.1,D); tone("sawtooth",1800*m,1200*m,t+0.16,0.18,0.07,D); noise(t,0.2,0.04,2600); break;
       case "snake": /* xi xi */ noise(t,0.5,0.1,3400); noise(t+0.4,0.35,0.07,3800); break;
       case "shark": /* dop nuoc */ tone("sine",70*m,28*m,t,0.3,0.3,D); noise(t,0.12,0.2,900); tone("sine",50*m,90*m,t+0.2,0.3,0.08,D); break;
-      case "robot": /* beep boop + servo */ [880,440,660].forEach((f,i)=> tone("square",f*m,f*m,t+i*0.09,0.07,0.09,D)); tone("sawtooth",120*m,220*m,t,0.3,0.05,D); break;
-      case "witch": /* cuoi khanh khach */ [0,1,2,3,4].forEach(i=> tone("triangle",(900-i*110)*m,(860-i*110)*m,t+i*0.09,0.08,0.09,D)); break;
-      case "dragon": this.v_roar(1.5*m,1); noise(t+0.1,0.4,0.06,600); break;
+      case "robot": /* beep boop + servo - v5.38: FM rit dien tu */ [880,440,660].forEach((f,i)=> tone("square",f*m,f*m,t+i*0.09,0.07,0.09,D)); fmTone("square",900*m,1400*m,163,420,t,0.28,0.05,D); tone("sawtooth",120*m,220*m,t,0.3,0.05,D); break;
+      case "witch": /* cuoi khanh khach - v5.38: am vang echo + FM wobble ma quai */ [0,1,2,3,4].forEach(i=> tone("triangle",(900-i*110)*m,(860-i*110)*m,t+i*0.09,0.08,0.09,echoDest()||D)); fmTone("triangle",640*m,470*m,8,55,t,0.5,0.05,D); break;
+      case "dragon": /* v5.38: FM gam sau + roar */ fmTone("sawtooth",85*m,52*m,31,70,t,0.6,0.15,D); this.v_roar(1.5*m,1); noise(t+0.1,0.4,0.06,600); break;
       case "boar":  /* grunt + giam chan */ this.v_oink(0.55*m,2); tone("sine",100,40,t+0.15,0.2,0.25,D); tone("sine",100,40,t+0.35,0.2,0.25,D); break;
       default: this.v_roar(m,1);
     }
@@ -1852,6 +2393,9 @@ const sfx = {
   bossSkill(id){
     const t = now();
     const V = 1 + (Math.random()*0.16 - 0.08); /* v5.36: pitch +-8% moi lan, tranh nham */
+    const D = bossVerbDest(); /* v5.37: skill cung qua reverb -> nang tay hon */
+    this.subDrop(); /* v5.38: SUB-BASS DROP 45->10Hz moi lan boss ra chieu */
+    noise(t, 0.1, 0.05, 150, D);
     switch(id){
       case "wolf":  this.bossVoice("wolf", V); break;
       case "fox":   /* poof trom phim */ noise(t,0.15,0.12,1500); tone("triangle",900*V,1600*V,t,0.18,0.07); this.bossVoice("fox", V); break;
@@ -1863,6 +2407,23 @@ const sfx = {
       case "witch": /* phep bay len */ tone("sine",500*V,1500*V,t,0.3,0.08); tone("sine",750*V,1900*V,t+0.08,0.3,0.06); this.bossVoice("witch", V); break;
       case "dragon": /* phun lua */ noise(t,0.5,0.14,500); tone("sawtooth",160*V,90*V,t,0.4,0.1); break;
       case "boar":  /* huc */ tone("sine",110*V,35*V,t,0.3,0.4); noise(t,0.2,0.15,200); this.v_oink(0.5*V,1); break;
+    }
+  },
+  /* v5.44: SKILL 2 - am sac rieng, van sub-drop + reverb boss */
+  bossSkill2(id){
+    const t = now(), D = bossVerbDest();
+    this.subDrop();
+    switch(id){
+      case "wolf":  /* hu doi + suong */ tone("sine",420,780,t,0.3,0.09,D); tone("sine",780,300,t+0.3,0.4,0.08,D); noise(t,0.5,0.05,2500,D); break;
+      case "fox":   /* trao "whoosh-pop" */ noise(t,0.1,0.1,1800,D); tone("triangle",700,1400,t,0.12,0.08,D); tone("triangle",1400,700,t+0.13,0.12,0.08,D); break;
+      case "bear":  /* gam kinh hoang FM */ fmTone("sawtooth",60,38,22,60,t,0.8,0.2,D); noise(t,0.5,0.08,100,D); break;
+      case "eagle": /* 3 mui long vu */ [0,0.12,0.24].forEach(o=> tone("sine",1800,900,t+o,0.1,0.06,D)); noise(t,0.3,0.06,3000,D); break;
+      case "snake": /* xi lan 3 dot */ [0,0.25,0.5].forEach((o,i)=> noise(t+o,0.22,0.09,3200+i*700,D)); break;
+      case "shark": /* 3 cu dop dan len */ [0,0.16,0.3].forEach((o,i)=>{ tone("sine",70+i*15,26,t+o,0.12,0.28,D); noise(t+o,0.06,0.16,1000,D); }); break;
+      case "robot": /* glissando dao cuc */ tone("square",1200,200,t,0.22,0.07,D); tone("square",200,1200,t+0.24,0.22,0.07,D); fmTone("square",700,700,90,300,t,0.4,0.04,D); break;
+      case "witch": { /* chuong nguyen lech tone + echo */ const E = echoDest()||D; [660,554,880,466].forEach((f,i)=> tone("triangle",f,f*0.97,t+i*0.09,0.25,0.06,E)); fmTone("sine",520,300,7,40,t,0.6,0.05,D); break; }
+      case "dragon": /* mua lua 4 dot */ [0,0.14,0.28,0.42].forEach(o=>{ noise(t+o,0.18,0.1,600,D); tone("sawtooth",140,80,t+o,0.2,0.07,D); }); break;
+      case "boar":  /* 3 cu huc don dap */ [0,0.2,0.4].forEach(o=>{ tone("sine",95,30,t+o,0.16,0.32,D); noise(t+o,0.08,0.12,220,D); }); break;
     }
   },
 };
@@ -1879,13 +2440,18 @@ const MEL_BOSS  = [64,0,64,67, 70,0,67,0, 64,0,64,63, 62,0,63,64,
 const BASS_BOSS = [40,0,40,0, 46,0,40,0, 43,0,40,0, 39,0,0,0,
                    40,0,40,0, 46,0,40,0, 43,0,44,0, 45,0,39,0];
 function curTrack(){
-  if(state.screen === "menu") return {mel:MEL_MENU, bass:BASS_MENU, step:0.34, wave:"triangle"};
-  if(state.screen === "game" && state.boss && !state.over) return {mel:MEL_BOSS, bass:BASS_BOSS, step: bossEnraged() ? 0.14 : 0.17, wave:"square"};
-  if(state.screen === "game" && state.mode === "time") return {mel:MEL, bass:BASS, step:0.19, wave:"square"};
+  if(state.screen === "menu") return {id:"menu", mel:MEL_MENU, bass:BASS_MENU, step:0.34, wave:"triangle"};
+  if(state.screen === "game" && state.boss && !state.over) return {id:"boss", mel:MEL_BOSS, bass:BASS_BOSS, step: bossEnraged() ? 0.14 : 0.17, wave:"square"};
+  if(state.screen === "game" && state.mode === "time") return {id:"time", mel:MEL, bass:BASS, step:0.19, wave:"square"};
   /* v5.36: sap thua (con <=2 mang) -> ha 3 semitone + cham lai = nhac "lo lang" */
   if(state.screen === "game" && !state.over && state.maxM > 2 && state.misses >= state.maxM - 2 && state.misses > 0)
-    return {mel:MEL, bass:BASS, step:0.28, wave:"square", tp:-3};
-  return {mel:MEL, bass:BASS, step:0.25, wave:"square"};
+    return {id:"tense", mel:MEL, bass:BASS, step:0.28, wave:"square", tp:-3, tense:true};
+  return {id:"main", mel:MEL, bass:BASS, step:0.25, wave:"square"};
+}
+/* v5.37: trang thai cang thang -> lowpass sweep (nhac toi & ngot ngat) */
+function musicTension(){
+  if(state.screen !== "game" || state.over) return false;
+  return state.maxM > 2 && state.misses >= state.maxM - 2 && state.misses > 0;
 }
 const midi = m => 440 * Math.pow(2, (m-69)/12);
 const STEP = 0.25;
@@ -1894,14 +2460,43 @@ function startMusic(){
   if(audio.timer) return;
   audio.nextT = audio.ctx.currentTime + 0.1;
   audio.step = 0;
+  audio._trkId = null;
+  audio._xfUntil = 0;
   audio.timer = setInterval(()=>{
     if(!audio.ctx) return;
-    while(audio.nextT < audio.ctx.currentTime + 0.15){
+    const ctxNow = audio.ctx.currentTime;
+    /* v5.37: dynamic lowpass sweep - gan thua thi nhac toi/ngot ngat, binh thuong mo lai */
+    if(audio.musicFilter){
+      try{
+        const target = musicTension() ? 620 : 18000;
+        if(audio._filtTarget !== target){
+          audio._filtTarget = target;
+          audio.musicFilter.frequency.cancelScheduledValues(ctxNow);
+          audio.musicFilter.frequency.setTargetAtTime(target, ctxNow, 0.35);
+        }
+      }catch(e){}
+    }
+    while(audio.nextT < ctxNow + 0.15){
       const tr = curTrack();
+      /* v5.37: crossfade 0.5s khi doi track (fade-out 0.25 + fade-in 0.25) thay vi ngat dot ngot */
+      if(audio._trkId !== null && audio._trkId !== tr.id && audio.musicXf){
+        try{
+          const xt = Math.max(audio.nextT - tr.step, ctxNow);
+          audio.musicXf.gain.cancelScheduledValues(ctxNow);
+          audio.musicXf.gain.setValueAtTime(audio.musicXf.gain.value, ctxNow);
+          audio.musicXf.gain.linearRampToValueAtTime(0.0001, xt + 0.25);
+          audio.musicXf.gain.linearRampToValueAtTime(1, xt + 0.5);
+        }catch(e){}
+      }
+      audio._trkId = tr.id;
       const s = audio.step % 32;
       const tp = tr.tp || 0; /* v5.36: transpose */
       if(tr.mel[s])  tone(tr.wave, midi(tr.mel[s]+tp),  midi(tr.mel[s]+tp),  audio.nextT, tr.step*0.85, 0.035, audio.musicGain);
-      if(tr.bass[s]) tone("triangle", midi(tr.bass[s]+tp), midi(tr.bass[s]+tp), audio.nextT, tr.step*0.95, 0.05,  audio.musicGain);
+      if(tr.bass[s]){
+        tone("triangle", midi(tr.bass[s]+tp), midi(tr.bass[s]+tp), audio.nextT, tr.step*0.95, 0.05,  audio.musicGain);
+        /* v5.37: SUB-BASS layer - sine 1 octave duoi (~50-80Hz) chay song song bassline chiptune */
+        tone("sine", midi(tr.bass[s]+tp-12), midi(tr.bass[s]+tp-12), audio.nextT, tr.step*1.05, 0.09, audio.musicGain);
+      }
       /* v5.36: layer percussion khi streak >= 3 (hi-hat noise + kick) */
       if(state.screen === "game" && !state.over && state.streak >= 3){
         if(s % 2 === 0) noise(audio.nextT, 0.03, 0.02, 6000, audio.musicGain);
@@ -1946,6 +2541,59 @@ function burst(x, y, opts){
     document.body.appendChild(p);
     p.addEventListener("animationend", ()=> p.remove());
     setTimeout(()=>{ if(p.parentNode) p.remove(); }, 1400); // fallback cleanup
+  }
+}
+
+/* ---- v5.37: KEYBOARD FX - ripple, khoi do, sparkle ---- */
+function keyRipple(keyEl){
+  if(!keyEl || reduced() || !settings.parts) return;
+  const r = document.createElement("span");
+  r.className = "kripple";
+  keyEl.appendChild(r);
+  r.addEventListener("animationend", ()=> r.remove());
+  setTimeout(()=>{ if(r.parentNode) r.remove(); }, 600);
+}
+/* v5.38: khoi hat dung chung - cls "gray" = khoi xam (cao), mac dinh = khoi do */
+function smokeAt(x, y, n, cls){
+  if(reduced() || !settings.parts) return;
+  for(let i=0;i<n;i++){
+    const s = document.createElement("div");
+    s.className = "fx-smoke" + (cls ? " " + cls : "");
+    const sz = 10 + Math.random()*12;
+    s.style.left = (x - sz/2 + (Math.random()*28-14)) + "px";
+    s.style.top = (y - sz/2 + (Math.random()*10-5)) + "px";
+    s.style.width = sz + "px"; s.style.height = sz + "px";
+    s.style.setProperty("--sdx", (Math.random()*34-17) + "px");
+    s.style.setProperty("--sdur", (0.5 + Math.random()*0.4) + "s");
+    s.style.animationDelay = (i*0.04) + "s";
+    document.body.appendChild(s);
+    s.addEventListener("animationend", ()=> s.remove());
+    setTimeout(()=>{ if(s.parentNode) s.remove(); }, 1400);
+  }
+}
+function keySmoke(keyEl){
+  if(!keyEl) return;
+  const c = center(keyEl);
+  smokeAt(c.x, c.y, 5);
+}
+/* no hat lap lanh nho tai tam slot khi chu bay ha canh */
+function slotSparkle(x, y){
+  if(reduced() || !settings.parts) return;
+  for(let i=0;i<8;i++){
+    const p = document.createElement("div");
+    p.className = "fx-p spark";
+    const angle = (Math.PI*2*i)/8 + Math.random()*0.5;
+    const dist = 26 + Math.random()*20;
+    const s = 3 + Math.random()*3;
+    p.style.left = x + "px"; p.style.top = y + "px";
+    p.style.width = s + "px"; p.style.height = s + "px";
+    p.style.setProperty("--dx", (Math.cos(angle)*dist) + "px");
+    p.style.setProperty("--dy", (Math.sin(angle)*dist - 14) + "px");
+    p.style.setProperty("--rot", (Math.random()*360-180) + "deg");
+    p.style.setProperty("--dur", (0.35 + Math.random()*0.25) + "s");
+    document.body.appendChild(p);
+    p.addEventListener("animationend", ()=> p.remove());
+    setTimeout(()=>{ if(p.parentNode) p.remove(); }, 900);
   }
 }
 
@@ -2005,6 +2653,7 @@ function flyLetter(L, fromEl, correct){
         ], { duration:340, easing:"cubic-bezier(0.3, 0.7, 0.4, 1)" }).onfinish = ()=>{
           el.remove();
           if(sl){ sl.classList.remove("land"); void sl.offsetWidth; sl.classList.add("land"); setTimeout(()=>{ try{ sl.classList.remove("land"); }catch(e){} }, 400); }
+          slotSparkle(to.x, to.y); /* v5.37: no hat lap lanh tai tam slot */
         };
       } else el.remove();
       setTimeout(()=>{ if(el.parentNode) el.remove(); }, 700);
@@ -2781,9 +3430,10 @@ function buildKeyboard(order){
    7 ROBOT hack 6 phim (che nhan)   8 PHU THUY trao 26 phim
    9 RONG dot khoa 4 phim          10 VUA HEO RUNG huc: trao phim + khoa 3
    Chu ky tan cong ngan dan: 11s (soi) -> 6s (heo rung). Moi lan doan sai cung bi danh. */
-const kbFx = { t:0, order:null, locked:new Set() };
-const KB_IV = { wolf:11000, fox:10000, bear:9500, eagle:9000, snake:8500, shark:8000, robot:7500, witch:7000, dragon:6500, boar:6000 };
-const KB_FX_CLS = ["venom","stolen","pawed","bitten","burnt","glitch"];
+const kbFx = { t:0, order:null, locked:new Set(), alt:true }; /* v5.44: alt = luan phien 2 bo chieu */
+/* v5.39: chu ky tan cong NHANH hon (11s->7.5s ... 6s->3.8s), enraged con x0.6 */
+const KB_IV = { wolf:7500, fox:7000, bear:6600, eagle:6200, snake:5800, shark:5400, robot:5000, witch:4600, dragon:4200, boar:3800 };
+const KB_FX_CLS = ["venom","stolen","pawed","bitten","burnt","glitch","misted","feathered","hexFloat","melt"]; /* v5.44: + skill 2 */
 function kbAvail(){
   const pool = [];
   for(let i=65; i<=90; i++){
@@ -2856,15 +3506,554 @@ function witchShuffle(){
   kbShout("TRÁO PHÍM!", "#8E6AB3");
   try{ sfx.powerup(); }catch(e){}
 }
+/* ==== v5.44: SKILL 2 - bo chieu thu hai cua 10 boss ==== */
+function kbLockKey(L, ms, cls){ /* khoa 1 phim cu the */
+  const k = $("key_" + L); if(!k) return;
+  kbFx.locked.add(L); k.classList.add(cls);
+  setTimeout(()=>{ try{ kbFx.locked.delete(L); const k2 = $("key_" + L); if(k2) k2.classList.remove(cls); if(state.word) renderKeys(); }catch(e){} }, ms);
+}
+function kbClassOnly(n, ms, cls){ /* gan class visual (van bam duoc) cho n phim */
+  kbPick(n).forEach(L=>{
+    const k = $("key_" + L); if(!k) return;
+    k.classList.add(cls);
+    setTimeout(()=>{ try{ const k2 = $("key_" + L); if(k2) k2.classList.remove(cls); }catch(e){} }, ms);
+  });
+}
+function kbApplyOrder(order, animCls){ /* doi layout, giu cac phim dang bi khoa/di hinh */
+  kbFx.order = order;
+  const saveLock = [];
+  document.querySelectorAll("#kb .key").forEach(k=>{ KB_FX_CLS.forEach(c=>{ if(k.classList.contains(c)) saveLock.push([k.id, c]); }); });
+  buildKeyboard(order || undefined);
+  saveLock.forEach(([kid, c])=>{ const k = $(kid); if(!k) return; k.classList.add(c); if(c === "glitch") k.textContent = KB_GLYPHS[Math.floor(Math.random()*KB_GLYPHS.length)]; });
+  if(state.word) renderKeys();
+  if(animCls){ const kb = $("kb"); kb.classList.remove(animCls); void kb.offsetWidth; kb.classList.add(animCls); }
+}
+function kbSwapPairs(n){ /* FOX 2: trao cho n cap phim */
+  const cur = kbFx.order ? kbFx.order.slice() : "QWERTYUIOPASDFGHJKLZXCVBNM".split("");
+  for(let i=0;i<n;i++){
+    const a = Math.floor(Math.random()*26), b = Math.floor(Math.random()*26);
+    const tmp = cur[a]; cur[a] = cur[b]; cur[b] = tmp;
+  }
+  kbApplyOrder(cur, "hexed");
+}
+function kbStunAll(ms){ /* BEAR 2: de choang toan bo ban phim */
+  const kb = $("kb");
+  kb.classList.remove("stunned"); void kb.offsetWidth; kb.classList.add("stunned");
+  const keys = kbAvail();
+  keys.forEach(L=> kbFx.locked.add(L));
+  setTimeout(()=>{ try{ keys.forEach(L=> kbFx.locked.delete(L)); $("kb").classList.remove("stunned"); if(state.word) renderKeys(); }catch(e){} }, ms);
+}
+function kbFeather(n, ms){ /* EAGLE 2: long vu ghim che nhan */
+  kbPick(n).forEach(L=>{
+    const k = $("key_" + L); if(!k) return;
+    k.classList.add("feathered"); k.textContent = "\u{1FAB6}";
+    setTimeout(()=>{ try{ const k2 = $("key_" + L); if(k2){ k2.classList.remove("feathered"); k2.textContent = L; } }catch(e){} }, ms);
+  });
+}
+function venomChain(){ /* SNAKE 2: noc lan 3 dot */
+  [0, 700, 1400].forEach((d,i)=> setTimeout(()=>{
+    try{ if(state.boss && !state.over) kbClassOnly(1 + i, 2600, "venom"); }catch(e){}
+  }, d));
+}
+function sharkHunt(){ /* SHARK 2: vay ca luot qua, dop 3 phim lien tiep 1 hang */
+  try{
+    const rows = document.querySelectorAll("#kb .kbRow");
+    if(!rows.length) return;
+    const row = rows[Math.floor(Math.random()*rows.length)];
+    const keys = [...row.querySelectorAll(".key")];
+    if(keys.length < 3) return;
+    const st = Math.floor(Math.random()*(keys.length - 2));
+    for(let i=0;i<3;i++){
+      setTimeout(()=>{
+        try{
+          const L = keys[st + i].id.slice(4);
+          if(!state.revealed.has(L) && !state.wrongSet.has(L)) kbLockKey(L, 1600, "bitten");
+        }catch(e){}
+      }, i*260);
+    }
+    const rr = row.getBoundingClientRect(); /* vay ca luot doc hang */
+    const fin = document.createElement("div");
+    fin.className = "sharkFin";
+    fin.style.left = (rr.right - 10) + "px";
+    fin.style.top = (rr.top - 30) + "px";
+    document.body.appendChild(fin);
+    fin.addEventListener("animationend", ()=> fin.remove());
+    setTimeout(()=>{ if(fin.parentNode) fin.remove(); }, 1800);
+  }catch(e){}
+}
+function kbInvert(ms){ /* ROBOT 2: dao nguoc toan bo layout roi tra lai */
+  const prev = kbFx.order ? kbFx.order.slice() : null;
+  const cur = prev ? prev.slice() : "QWERTYUIOPASDFGHJKLZXCVBNM".split("");
+  kbApplyOrder(cur.reverse(), "hexed");
+  setTimeout(()=>{ try{ if(state.boss && !state.over && state.screen === "game") kbApplyOrder(prev, "hexed"); }catch(e){} }, ms);
+}
+function witchHexFloat(n, ms){ /* WITCH 2: phim ma am bay lo lung */
+  kbClassOnly(n, ms, "hexFloat");
+}
+function dragonFireRain(n){ /* DRAGON 2: cau lua roi trung phim nao dot phim do */
+  kbPick(n).forEach((L,i)=> setTimeout(()=>{
+    try{
+      const k = $("key_" + L); if(!k || !state.boss || state.over) return;
+      const kr = k.getBoundingClientRect();
+      const fb = document.createElement("div");
+      fb.className = "fireball";
+      fb.style.left = (kr.left + kr.width/2 - 7) + "px";
+      fb.style.top = (kr.top - 6) + "px";
+      fb.style.setProperty("--fbd", (0.4 + Math.random()*0.2) + "s");
+      document.body.appendChild(fb);
+      setTimeout(()=>{ if(fb.parentNode) fb.remove(); }, 900);
+      setTimeout(()=>{
+        try{
+          kbLockKey(L, 2200, "burnt");
+          burst(kr.left + kr.width/2, kr.top + kr.height/2, {count:8, spread:52, size:5, colors:["#FF7A1E","#FFAA46","#C83C10"]});
+        }catch(e){}
+      }, 480);
+    }catch(e){}
+  }, i*180));
+}
+function boarRush(){ /* BOAR 2: 3 cu huc don dap */
+  [0, 380, 760].forEach((d,i)=> setTimeout(()=>{
+    try{
+      if(!state.boss || state.over) return;
+      kbScatter(2, 2200);
+      shake(i === 2 ? "md" : "sm");
+      const kr = $("kb").getBoundingClientRect();
+      ringPulse(kr.left + kr.width*(0.25 + i*0.25), kr.top + kr.height/2, BOSS_RING_COL.boar, 1);
+    }catch(e){}
+  }, d));
+}
 const KB_TINT = {
   wolf:"rgba(138,133,120,.15)", fox:"rgba(192,91,65,.15)", bear:"rgba(107,74,43,.2)",
   eagle:"rgba(90,180,220,.15)", snake:"rgba(125,155,106,.18)", shark:"rgba(192,57,43,.16)",
   robot:"rgba(90,180,220,.18)", witch:"rgba(142,106,179,.2)", dragon:"rgba(217,119,87,.22)", boar:"rgba(179,87,63,.2)"
 };
-function kbFxApply(id, isMiss){
-  /* v5.30: moi skill = am thanh rieng + rung man + flash mau boss */
-  try{ sfx.bossSkill(id); }catch(e){}
-  try{ shake("sm"); if(KB_TINT[id]) flashScreen(KB_TINT[id]); }catch(e){}
+/* ==== v5.38: MEGA BOSS FX - sieu hieu ung man hinh cho 10 boss ==== */
+function bossFxEl(cls, ms){
+  const d = document.createElement("div");
+  d.className = cls;
+  document.body.appendChild(d);
+  d.addEventListener("animationend", ()=>{ if(d.parentNode) d.remove(); });
+  setTimeout(()=>{ if(d.parentNode) d.remove(); }, ms);
+  return d;
+}
+function bossScreenPos(cx, cy){ /* toa do canvas scene (640x300) -> toa do man hinh */
+  try{
+    const r = $("sceneWrap").getBoundingClientRect();
+    return { x: r.left + r.width*(cx/640), y: r.top + r.height*(cy/300) };
+  }catch(e){ return { x: window.innerWidth*0.68, y: window.innerHeight*0.3 }; }
+}
+/* ---- v5.39: shared cinematic helpers ---- */
+function cineBars(ms){
+  if(reduced() || !settings.parts) return;
+  ["top","bottom"].forEach(side=>{
+    const b = document.createElement("div");
+    b.className = "cineBar " + side;
+    document.body.appendChild(b);
+    void b.offsetWidth; b.classList.add("in");
+    setTimeout(()=>{ try{ b.classList.remove("in"); }catch(e){} }, Math.max(400, ms - 450));
+    setTimeout(()=>{ if(b.parentNode) b.remove(); }, ms + 200);
+  });
+}
+function bossVig(ms){
+  if(reduced() || !settings.parts) return;
+  bossFxEl("bossVig", ms || 1600);
+}
+function ringPulse(x, y, color, n){
+  if(reduced() || !settings.parts) return;
+  for(let i=0;i<(n||2);i++){
+    setTimeout(()=>{
+      const r = document.createElement("div");
+      r.className = "shockRing";
+      const sz = 200 + i*140;
+      r.style.width = sz + "px"; r.style.height = sz + "px";
+      r.style.left = x + "px"; r.style.top = y + "px";
+      if(color){ r.style.borderColor = color; r.style.boxShadow = "0 0 16px 4px " + color; }
+      document.body.appendChild(r);
+      r.addEventListener("animationend", ()=> r.remove());
+      setTimeout(()=>{ if(r.parentNode) r.remove(); }, 1300);
+    }, i*130);
+  }
+}
+function emberRise(n, color, glyph){
+  if(reduced() || !settings.parts) return;
+  for(let i=0;i<n;i++){
+    const e = document.createElement("div");
+    if(glyph){ e.className = "fx-rune"; e.textContent = glyph; e.style.color = color; }
+    else {
+      e.className = "fx-ember";
+      const s = 3 + Math.random()*5;
+      e.style.width = s + "px"; e.style.height = s + "px";
+      e.style.background = color; e.style.boxShadow = "0 0 8px 2px " + color;
+    }
+    e.style.left = Math.round(Math.random()*window.innerWidth) + "px";
+    e.style.top = Math.round(window.innerHeight*0.55 + Math.random()*window.innerHeight*0.4) + "px";
+    e.style.setProperty("--edx", (Math.random()*90-45) + "px");
+    e.style.setProperty("--erot", Math.round(Math.random()*240-120) + "deg");
+    e.style.setProperty("--edur", (1.3 + Math.random()*1.2) + "s");
+    e.style.animationDelay = (Math.random()*0.5) + "s";
+    document.body.appendChild(e);
+    e.addEventListener("animationend", ()=> e.remove());
+    setTimeout(()=>{ if(e.parentNode) e.remove(); }, 3400);
+  }
+}
+function windLines(n){
+  if(reduced() || !settings.parts) return;
+  for(let i=0;i<n;i++){
+    const l = document.createElement("div");
+    l.className = "windLine";
+    l.style.width = (120 + Math.random()*180) + "px";
+    l.style.left = (window.innerWidth*0.65 + Math.random()*window.innerWidth*0.35) + "px";
+    l.style.top = Math.round(Math.random()*window.innerHeight*0.85) + "px";
+    l.style.setProperty("--wdur", (0.6 + Math.random()*0.5) + "s");
+    l.style.animationDelay = (Math.random()*0.4) + "s";
+    document.body.appendChild(l);
+    l.addEventListener("animationend", ()=> l.remove());
+    setTimeout(()=>{ if(l.parentNode) l.remove(); }, 1800);
+  }
+}
+/* v5.40: overlay dinh vi theo khung ban phim (nhu sigil witch) */
+function kbZoneEl(cls, ms, pad){
+  try{
+    const kr = $("kb").getBoundingClientRect();
+    if(!kr.width) return null;
+    const p = pad || 8;
+    const d = document.createElement("div");
+    d.className = "kbZone " + cls;
+    d.style.left = (kr.left - p) + "px"; d.style.top = (kr.top - p) + "px";
+    d.style.width = (kr.width + p*2) + "px"; d.style.height = (kr.height + p*2) + "px";
+    document.body.appendChild(d);
+    d.addEventListener("animationend", (e)=>{ if(e.target === d && d.parentNode) d.remove(); });
+    setTimeout(()=>{ if(d.parentNode) d.remove(); }, ms);
+    return d;
+  }catch(e){ return null; }
+}
+const BOSS_RING_COL = {
+  wolf:"rgba(200,200,215,.85)", bear:"rgba(255,110,60,.85)", boar:"rgba(255,205,155,.9)",
+  dragon:"rgba(255,120,50,.9)", shark:"rgba(120,190,235,.9)", witch:"rgba(190,125,255,.9)"
+};
+/* v5.43: mau ruc ro rieng tung boss - edge flash + confetti */
+const BOSS_VIVID = {
+  wolf:"rgba(190,200,225,.6)",  fox:"rgba(240,130,55,.6)",   bear:"rgba(200,80,40,.62)",
+  eagle:"rgba(100,190,240,.6)", snake:"rgba(110,205,80,.62)", shark:"rgba(50,140,210,.62)",
+  robot:"rgba(60,255,120,.6)",  witch:"rgba(180,90,255,.62)", dragon:"rgba(255,90,30,.66)", boar:"rgba(230,60,45,.66)"
+};
+const BOSS_CONF = {
+  wolf:["#C8D0E0","#8A94A8","#F0EEE6"],   fox:["#F08237","#FFB067","#C05B41"],
+  bear:["#C85028","#8A5D36","#FF7040"],   eagle:["#64BEF0","#BDE3F0","#F5F3EC"],
+  snake:["#6ECD50","#A5E88A","#3E7D2C"],  shark:["#328CD2","#7DC8F0","#1E5C8C"],
+  robot:["#3CFF78","#5AB4DC","#B0FFD0"],  witch:["#B45AFF","#E0B0FF","#7D3CC8"],
+  dragon:["#FF5A1E","#FFAA46","#FFE08C"], boar:["#E63C2D","#FF9C78","#C9A227"]
+};
+function bossEdge(color){
+  if(reduced() || !settings.parts) return;
+  const d = document.createElement("div");
+  d.className = "bossEdge";
+  if(color) d.style.setProperty("--bec", color);
+  document.body.appendChild(d);
+  d.addEventListener("animationend", ()=> d.remove());
+  setTimeout(()=>{ if(d.parentNode) d.remove(); }, 1200);
+}
+/* v5.39: cinematic mo man khi boss VUA XUAT HIEN (goi tu kbFxStart) */
+function bossIntroFx(){
+  if(reduced() || !settings.parts) return;
+  const id = bossKind().id;
+  cineBars(2000);
+  bossVig(1600);
+  const bp = bossScreenPos(BOSS_X + 25, BOSS_Y + 40);
+  ringPulse(bp.x, bp.y, BOSS_RING_COL[id] || BOSS_VIVID[id] || "rgba(240,238,230,.8)", 3);
+  smokeAt(bp.x, bp.y + 30, 6, "gray"); /* bui dap dat */
+  bossEdge(BOSS_VIVID[id]); /* v5.43: khung man chop mau boss */
+  burst(bp.x, bp.y, {count:18, spread:160, size:8, colors: BOSS_CONF[id] || PALETTE}); /* v5.43: confetti mau boss */
+  setTimeout(()=> bossEdge(BOSS_VIVID[id]), 350); /* chop kep */
+  shake("md");
+  try{ hitstop(90); }catch(e){}
+}
+function bossMegaFx(id){
+  if(reduced() || !settings.parts) return;
+  const bp = bossScreenPos(BOSS_X + 25, BOSS_Y + 40);
+  switch(id){
+    case "wolf": { /* suong mu + hu tao vong song am + ban phim rung lien tuc */
+      bossFxEl("bossFog", 2800);
+      bossVig(1500);
+      ringPulse(bp.x, bp.y - 10, BOSS_RING_COL.wolf, 3); /* v5.39: vong song tieng hu */
+      kbZoneEl("kbFogZ", 2600, 10); /* v5.40: suong mu cuon qua ban phim */
+      kbTremor(); setTimeout(()=>{ try{ kbTremor(); }catch(e){} }, 1150);
+      break; }
+    case "fox": { /* may khoi hat + bong cao chop tat + vet luot cam */
+      const w = $("sceneWrap");
+      w.classList.remove("foxFlicker"); void w.offsetWidth; w.classList.add("foxFlicker");
+      setTimeout(()=>{ try{ w.classList.remove("foxFlicker"); }catch(e){} }, 2500);
+      for(let i=0;i<4;i++) setTimeout(()=> smokeAt(bp.x, bp.y, 4, "gray"), i*90);
+      for(let i=0;i<4;i++){ /* v5.39: afterimage dash cao luot qua */
+        const d = document.createElement("div");
+        d.className = "foxDash";
+        d.style.width = (130 + Math.random()*120) + "px";
+        d.style.left = (bp.x + 40 + Math.random()*80) + "px";
+        d.style.top = (bp.y - 50 + Math.random()*110) + "px";
+        d.style.animationDelay = (i*0.09) + "s";
+        document.body.appendChild(d);
+        d.addEventListener("animationend", ()=> d.remove());
+        setTimeout(()=>{ if(d.parentNode) d.remove(); }, 1300);
+      }
+      /* v5.40: dau chan cao chay ngang ban phim */
+      try{
+        const kr = $("kb").getBoundingClientRect();
+        for(let i=0;i<5;i++){
+          setTimeout(()=>{
+            const pw = document.createElement("div");
+            pw.className = "kbPaw";
+            pw.textContent = "\u{1F43E}";
+            pw.style.left = (kr.left + kr.width*(0.08 + i*0.2)) + "px";
+            pw.style.top = (kr.top + kr.height*(0.25 + (i%2)*0.4)) + "px";
+            pw.style.setProperty("--pr", (Math.random()*40-20) + "deg");
+            document.body.appendChild(pw);
+            pw.addEventListener("animationend", ()=> pw.remove());
+            setTimeout(()=>{ if(pw.parentNode) pw.remove(); }, 1400);
+          }, i*110);
+        }
+      }catch(e){}
+      break; }
+    case "bear": { /* vet nut do phat sang lan tu goc boss + da bui vang */
+      const wrap = bossFxEl("bossCrackWrap", 1600);
+      const maxL = Math.hypot(window.innerWidth, window.innerHeight);
+      for(let i=0;i<13;i++){ /* v5.43: nhieu vet nut hon */
+        const c = document.createElement("div");
+        c.className = "bossCrack";
+        c.style.left = bp.x + "px"; c.style.top = bp.y + "px";
+        c.style.width = (maxL * (0.25 + Math.random()*0.55)) + "px";
+        c.style.setProperty("--ca", Math.round(Math.random()*360) + "deg");
+        c.style.animationDelay = (i*0.03) + "s";
+        wrap.appendChild(c);
+      }
+      burst(bp.x, bp.y, {count:16, spread:170, size:8, colors:["#8A8578","#6B4A2B","#C9C4B6","#C05B41"]});
+      cineBars(1500); bossVig(1400); /* v5.39 */
+      for(let i=0;i<8;i++){ /* v5.39: da roi tu tran xuong */
+        const rk = document.createElement("div");
+        rk.className = "fx-rock";
+        const s = 6 + Math.random()*10;
+        rk.style.width = s + "px"; rk.style.height = (s*0.8) + "px";
+        rk.style.left = Math.round(Math.random()*window.innerWidth) + "px";
+        rk.style.top = "0px";
+        rk.style.setProperty("--rdur", (0.7 + Math.random()*0.5) + "s");
+        rk.style.setProperty("--rrot", Math.round(Math.random()*440-220) + "deg");
+        rk.style.animationDelay = (Math.random()*0.3) + "s";
+        document.body.appendChild(rk);
+        rk.addEventListener("animationend", ()=> rk.remove());
+        setTimeout(()=>{ if(rk.parentNode) rk.remove(); }, 1800);
+      }
+      /* v5.40: vet nut nho lan duoi ban phim */
+      try{
+        const kr = $("kb").getBoundingClientRect();
+        const kwrap = bossFxEl("bossCrackWrap", 1400);
+        for(let i=0;i<6;i++){
+          const kc = document.createElement("div");
+          kc.className = "bossCrack";
+          kc.style.left = (kr.left + kr.width/2) + "px";
+          kc.style.top = (kr.top + kr.height*0.7) + "px";
+          kc.style.width = (kr.width*(0.18 + Math.random()*0.3)) + "px";
+          kc.style.setProperty("--ca", Math.round(Math.random()*360) + "deg");
+          kc.style.animationDelay = (i*0.04) + "s";
+          kwrap.appendChild(kc);
+        }
+      }catch(e){}
+      shake("lg");
+      break; }
+    case "eagle": { /* loc long vu cuon xeo man hinh + UI nghieng */
+      const app = $("app");
+      app.classList.remove("gale"); void app.offsetWidth; app.classList.add("gale");
+      setTimeout(()=>{ try{ app.classList.remove("gale"); }catch(e){} }, 1800);
+      for(let i=0;i<22;i++){ /* v5.43: loc long vu day hon */
+        const f = document.createElement("div");
+        f.className = "fx-feather";
+        const sz = 8 + Math.random()*10;
+        f.style.width = (sz*2) + "px"; f.style.height = sz + "px";
+        f.style.left = (window.innerWidth + 20 + Math.random()*140) + "px";
+        f.style.top = (Math.random()*window.innerHeight*0.8) + "px";
+        f.style.setProperty("--fdx", -(window.innerWidth + 280 + Math.random()*220) + "px");
+        f.style.setProperty("--fdy", (Math.random()*240 - 60) + "px");
+        f.style.setProperty("--frot", (540 + Math.random()*560) + "deg");
+        f.style.setProperty("--fdur", (1.1 + Math.random()*0.9) + "s");
+        f.style.animationDelay = (Math.random()*0.35) + "s";
+        document.body.appendChild(f);
+        f.addEventListener("animationend", ()=> f.remove());
+        setTimeout(()=>{ if(f.parentNode) f.remove(); }, 2900);
+      }
+      windLines(7); /* v5.39: lan gio trang quet kem loc long vu */
+      /* v5.40: long vu roi lac lu xuong ban phim */
+      try{
+        const kr = $("kb").getBoundingClientRect();
+        for(let i=0;i<6;i++){
+          const f2 = document.createElement("div");
+          f2.className = "fx-feather";
+          const sz = 7 + Math.random()*7;
+          f2.style.width = (sz*2) + "px"; f2.style.height = sz + "px";
+          f2.style.left = (kr.left + Math.random()*kr.width) + "px";
+          f2.style.top = (kr.top - 80 - Math.random()*60) + "px";
+          f2.style.setProperty("--fdx", (Math.random()*70-35) + "px");
+          f2.style.setProperty("--fdy", (110 + Math.random()*70) + "px");
+          f2.style.setProperty("--frot", (180 + Math.random()*300) + "deg");
+          f2.style.setProperty("--fdur", (1.2 + Math.random()*0.7) + "s");
+          f2.style.animationDelay = (Math.random()*0.4) + "s";
+          document.body.appendChild(f2);
+          f2.addEventListener("animationend", ()=> f2.remove());
+          setTimeout(()=>{ if(f2.parentNode) f2.remove(); }, 2700);
+        }
+      }catch(e){}
+      break; }
+    case "snake": { /* noc doc lam phim chay xe meo mo + giot noc nho xuong */
+      kbPick(5).forEach((L,i)=> setTimeout(()=>{
+        try{
+          const k = $("key_" + L); if(!k) return;
+          k.classList.add("melt");
+          setTimeout(()=>{ try{ k.classList.remove("melt"); }catch(e){} }, 2500);
+          /* v5.39: giot noc doc nho tu tren phim */
+          const kr = k.getBoundingClientRect();
+          const dr = document.createElement("div");
+          dr.className = "venomDrip";
+          dr.style.height = (14 + Math.random()*12) + "px";
+          dr.style.left = (kr.left + kr.width/2 - 3) + "px";
+          dr.style.top = (kr.top - 26) + "px";
+          dr.style.setProperty("--ddur", (0.7 + Math.random()*0.4) + "s");
+          document.body.appendChild(dr);
+          dr.addEventListener("animationend", ()=> dr.remove());
+          setTimeout(()=>{ if(dr.parentNode) dr.remove(); }, 1600);
+        }catch(e){}
+      }, i*130));
+      kbZoneEl("acidPool", 2400, 16); /* v5.40: vung axit sui bot duoi ban phim */
+      break; }
+    case "shark": { /* song nuoc cuon tran man + vay ca luot ngang + tint xanh */
+      bossFxEl("bossWave", 1800);
+      flashScreen("rgba(60,130,180,.28)"); /* v5.39 */
+      const fin = document.createElement("div"); /* v5.39: vay ca map */
+      fin.className = "sharkFin";
+      fin.style.left = (window.innerWidth*0.9) + "px";
+      fin.style.top = (window.innerHeight*0.68) + "px";
+      document.body.appendChild(fin);
+      fin.addEventListener("animationend", ()=> fin.remove());
+      setTimeout(()=>{ if(fin.parentNode) fin.remove(); }, 1800);
+      kbZoneEl("kbWaveZ", 1400, 6); /* v5.40: song tran ngang ban phim */
+      break; }
+    case "robot": { /* ma tran hat xanh la + kb nhieu soc ngang */
+      const glyphs = "01<>#%&@!?";
+      for(let i=0;i<18;i++){ /* v5.43: mua ma tran day hon */
+        const col = document.createElement("div");
+        col.className = "mtxCol";
+        let s = ""; const n = 6 + Math.floor(Math.random()*8);
+        for(let j=0;j<n;j++) s += glyphs[Math.floor(Math.random()*glyphs.length)];
+        col.textContent = s;
+        col.style.left = Math.round(Math.random()*window.innerWidth) + "px";
+        col.style.fontSize = (10 + Math.random()*8) + "px";
+        col.style.setProperty("--mdur", (0.9 + Math.random()*0.9) + "s");
+        col.style.animationDelay = (Math.random()*0.4) + "s";
+        document.body.appendChild(col);
+        col.addEventListener("animationend", ()=> col.remove());
+        setTimeout(()=>{ if(col.parentNode) col.remove(); }, 2700);
+      }
+      const kb = $("kb");
+      kb.classList.remove("scan"); void kb.offsetWidth; kb.classList.add("scan");
+      setTimeout(()=>{ try{ $("kb").classList.remove("scan"); }catch(e){} }, 2000);
+      /* v5.39: man hinh giat glitch + reticle ngam do khoa phim */
+      try{
+        const w = $("sceneWrap");
+        w.classList.remove("glitchScr"); void w.offsetWidth; w.classList.add("glitchScr");
+        setTimeout(()=>{ try{ w.classList.remove("glitchScr"); }catch(e){} }, 550);
+      }catch(e){}
+      try{
+        const pool = kbAvail();
+        const tgt = $("key_" + pool[Math.floor(Math.random()*pool.length)]);
+        if(tgt){
+          const tr = tgt.getBoundingClientRect();
+          const ret = document.createElement("div");
+          ret.className = "lockRet";
+          ret.style.left = (tr.left - 5) + "px"; ret.style.top = (tr.top - 5) + "px";
+          ret.style.width = (tr.width + 10) + "px"; ret.style.height = (tr.height + 10) + "px";
+          document.body.appendChild(ret);
+          ret.addEventListener("animationend", ()=> ret.remove());
+          setTimeout(()=>{ if(ret.parentNode) ret.remove(); }, 1100);
+        }
+      }catch(e){}
+      break; }
+    case "witch": { /* vong tron ma thuat xoay duoi ban phim */
+      try{
+        const kr = $("kb").getBoundingClientRect();
+        const sz = Math.min(kr.width*0.72, 360);
+        const sg = document.createElement("div");
+        sg.className = "witchSigil";
+        sg.style.width = sz + "px"; sg.style.height = sz + "px";
+        sg.style.left = (kr.left + kr.width/2 - sz/2) + "px";
+        sg.style.top = (kr.top + kr.height/2 - sz/2) + "px";
+        document.body.appendChild(sg);
+        sg.addEventListener("animationend", ()=> sg.remove());
+        setTimeout(()=>{ if(sg.parentNode) sg.remove(); }, 1900);
+      }catch(e){}
+      emberRise(9, "rgba(200,140,255,.95)", "✦"); /* v5.39: rune tim bay len */
+      bossVig(1400);
+      break; }
+    case "dragon": { /* man do ruc + heat distortion + tan lua bay + letterbox */
+      bossFxEl("dragonHeat", 1600);
+      try{
+        const w = $("sceneWrap");
+        w.classList.add("heatwave");
+        setTimeout(()=>{ try{ w.classList.remove("heatwave"); }catch(e){} }, 1300);
+      }catch(e){}
+      emberRise(20, "rgba(255,150,60,.95)"); /* v5.39: tan lua | v5.43: day hon */
+      kbZoneEl("kbFire", 1650, 4); /* v5.40: lua liem mep duoi ban phim */
+      cineBars(1500);
+      break; }
+    case "boar": { /* vong song xung kich + day lui nhan vat + zoom punch + bui dat */
+      ringPulse(bp.x, bp.y, BOSS_RING_COL.boar, 3);
+      try{
+        const w = $("sceneWrap");
+        w.classList.remove("knockback"); void w.offsetWidth; w.classList.add("knockback");
+        setTimeout(()=>{ try{ w.classList.remove("knockback"); }catch(e){} }, 620);
+        /* v5.39: bui dat tung doc mat dat san dau */
+        const r = w.getBoundingClientRect();
+        for(let i=0;i<5;i++) setTimeout(()=> smokeAt(r.left + r.width*(0.15 + Math.random()*0.7), r.bottom - 12, 3, "gray"), i*70);
+      }catch(e){}
+      try{ /* v5.39: zoom punch toan man */
+        const app = $("app");
+        app.classList.remove("zoomPunch"); void app.offsetWidth; app.classList.add("zoomPunch");
+        setTimeout(()=>{ try{ app.classList.remove("zoomPunch"); }catch(e){} }, 500);
+      }catch(e){}
+      try{ /* v5.40: ban phim nay bat + ring tai tam kb */
+        const kb = $("kb");
+        kb.classList.remove("quake"); void kb.offsetWidth; kb.classList.add("quake");
+        setTimeout(()=>{ try{ $("kb").classList.remove("quake"); }catch(e){} }, 700);
+        const kr = kb.getBoundingClientRect();
+        ringPulse(kr.left + kr.width/2, kr.top + kr.height/2, BOSS_RING_COL.boar, 1);
+      }catch(e){}
+      cineBars(1300);
+      shake("lg");
+      break; }
+  }
+  /* ==== v5.41: LEO THANG theo thu tu boss (soi 0 -> vua heo rung 9)
+     tac dong ban phim manh dan, uc che tang dan, hieu ung dep dan
+     v5.43: NANG DO - edge flash mau + confetti ban phim moi don ==== */
+  const tier = bossTierOf(id);
+  bossEdge(BOSS_VIVID[id]); /* v5.43: khung man chop mau rieng boss, MOI don */
+  try{ /* v5.43: confetti mau boss no tai ban phim, day dan theo tier */
+    const kr = $("kb").getBoundingClientRect();
+    if(kr.width) burst(kr.left + kr.width/2, kr.top + kr.height/2, {count: 8 + tier*2, spread: 90 + tier*14, size: 7, colors: BOSS_CONF[id] || PALETTE});
+  }catch(e){}
+  if(tier >= 2) bossVig(1000 + tier*90);                                  /* toi goc man sau dan */
+  if(tier >= 3) windLines(1 + tier);                                      /* gio quet nhieu dan */
+  if(tier >= 4){ kbTremor(); }                                            /* ban phim rung moi don */
+  if(tier >= 5){ /* flash kep + edge kep */
+    setTimeout(()=>{ try{ flashScreen(KB_TINT[id] || "rgba(60,50,40,.2)"); bossEdge(BOSS_VIVID[id]); }catch(e){} }, 200);
+  }
+  if(tier >= 6) ringPulse(bp.x, bp.y, BOSS_RING_COL[id] || BOSS_VIVID[id] || "rgba(240,238,230,.8)", 1 + Math.floor(tier/4));
+  if(tier >= 7){ cineBars(1000 + tier*70); emberRise(4 + tier, tier >= 8 ? "rgba(255,140,60,.9)" : "rgba(205,205,235,.85)"); }
+  if(tier >= 8){
+    try{ const app = $("app"); app.classList.remove("zoomPunch"); void app.offsetWidth; app.classList.add("zoomPunch"); setTimeout(()=>{ try{ app.classList.remove("zoomPunch"); }catch(e){} }, 500); }catch(e){}
+    try{ const kb = $("kb"); kb.classList.remove("quake"); void kb.offsetWidth; kb.classList.add("quake"); setTimeout(()=>{ try{ $("kb").classList.remove("quake"); }catch(e){} }, 700); }catch(e){}
+  }
+  shake(tier >= 7 ? "lg" : tier >= 4 ? "md" : "sm");
+}
+function bossTierOf(id){
+  for(let i=0;i<BOSS_KINDS.length;i++) if(BOSS_KINDS[i].id === id) return i;
+  return 0;
+}
+function kbSkill1(id, isMiss){ /* v5.44: bo chieu 1 (goc) */
   switch(id){
     case "wolf":  kbTremor(); kbShout("SÓI HÚ!", "#8A8578"); break;
     case "fox":   kbSteal(1, 3500); kbShout("CÁO TRỘM PHÍM!", "#C05B41"); break;
@@ -2873,9 +4062,38 @@ function kbFxApply(id, isMiss){
     case "snake": snakeVenom(isMiss ? 3 : 4); break;
     case "shark": kbLock(2, 4000, "bitten"); kbShout("CÁ MẬP ĐỚP!", "#C0392B"); break;
     case "robot": kbGlitch(6, 3000); kbShout("HACK BÀN PHÍM!", "#5AB4DC"); break;
-    case "witch": witchShuffle(); break;
+    case "witch": /* v5.38: sigil xoay 0.55s roi moi trao phim -> cinematic */
+      setTimeout(()=>{ try{ if(state.boss && !state.over) witchShuffle(); }catch(e){} }, 550); break;
     case "dragon": kbLock(4, 3500, "burnt"); kbShout("LỬA KHÈ PHÍM!", "#C05B41"); break;
     case "boar":  witchShuffle(); kbLock(3, 3000, "pawed"); kbShout("HEO RỪNG HÚC!", "#B3573F"); break;
+  }
+}
+function kbSkill2(id, isMiss){ /* v5.44: bo chieu 2 (moi) */
+  switch(id){
+    case "wolf":  kbClassOnly(2, 2600, "misted"); kbTremor(); kbShout("SƯƠNG MA!", "#B0B8C8"); break;
+    case "fox":   kbSwapPairs(2); kbShout("TRÁO CẶP PHÍM!", "#F08237"); break;
+    case "bear":  kbStunAll(1200); kbShout("GẦM KINH HOÀNG!", "#8A5D36"); break;
+    case "eagle": kbFeather(3, 3200); kbShout("LÔNG VŨ GHIM!", "#64BEF0"); break;
+    case "snake": venomChain(); kbShout("NỌC LAN!", "#6ECD50"); break;
+    case "shark": sharkHunt(); kbShout("SĂN MỒI!", "#328CD2"); break;
+    case "robot": kbInvert(4000); kbShout("ĐẢO CỰC BÀN PHÍM!", "#3CFF78"); break;
+    case "witch": witchHexFloat(3, 3000); kbShout("PHÍM MA ÁM!", "#B45AFF"); break;
+    case "dragon": dragonFireRain(4); kbShout("MƯA LỬA!", "#FF5A1E"); break;
+    case "boar":  boarRush(); kbShout("HÚC LIÊN HOÀN!", "#E63C2D"); break;
+  }
+}
+function kbFxApply(id, isMiss){
+  /* v5.30: moi skill = am thanh rieng + rung man + flash mau boss
+     v5.38: + sieu hieu ung man hinh (bossMegaFx)
+     v5.44: 2 bo chieu luan phien; CUONG NO -> tung ca hai */
+  try{ shake("sm"); if(KB_TINT[id]) flashScreen(KB_TINT[id]); }catch(e){}
+  try{ bossMegaFx(id); }catch(e){}
+  const enr = !!(state.boss && (typeof bossEnraged === "function") && bossEnraged());
+  kbFx.alt = !kbFx.alt;
+  if(enr || !kbFx.alt){ try{ sfx.bossSkill(id); }catch(e){} try{ kbSkill1(id, isMiss); }catch(e){} }
+  if(enr || kbFx.alt){
+    const fire2 = ()=>{ try{ sfx.bossSkill2(id); }catch(e){} try{ kbSkill2(id, isMiss); }catch(e){} };
+    if(enr) setTimeout(fire2, 650); else fire2(); /* cuong no: don 2 dap vao 0.65s sau */
   }
 }
 function kbFxTick(){
@@ -2885,10 +4103,18 @@ function kbFxTick(){
 function kbFxStart(){
   kbFxStop();
   if(!state.boss) return;
-  kbFx.t = setInterval(kbFxTick, KB_IV[bossKind().id] || 9000);
+  kbFx.alt = true; /* v5.44: don dau tien luon la bo chieu 1 */
+  try{ bossIntroFx(); }catch(e){} /* v5.39: cinematic ngay khi boss xuat hien */
+  const loop = ()=>{
+    if(!state.boss || state.over || state.screen !== "game"){ kbFx.t = 0; return; }
+    kbFxTick();
+    const base = KB_IV[bossKind().id] || 6000;
+    kbFx.t = setTimeout(loop, Math.round(base * (bossEnraged() ? 0.6 : 1))); /* v5.39: cuong no danh nhanh hon */
+  };
+  kbFx.t = setTimeout(loop, 2200); /* v5.39: don dau tung ra ngay sau intro, khong bat cho het chu ky */
 }
 function kbFxStop(){
-  if(kbFx.t){ clearInterval(kbFx.t); kbFx.t = 0; }
+  if(kbFx.t){ clearTimeout(kbFx.t); clearInterval(kbFx.t); kbFx.t = 0; }
   kbFx.locked.clear();
   document.querySelectorAll("#kb .key").forEach(k=>{
     KB_FX_CLS.forEach(c => k.classList.remove(c));
@@ -2897,7 +4123,7 @@ function kbFxStop(){
     const L = k.id.slice(4);
     if(k.textContent !== L) k.textContent = L; /* tra nhan that (robot hack) */
   });
-  $("kb").classList.remove("hexed", "tremor");
+  $("kb").classList.remove("hexed", "tremor", "stunned", "scan", "quake"); /* v5.44 */
   if(kbFx.order){ kbFx.order = null; buildKeyboard(); if(state.word) renderKeys(); }
 }
 function kbFxOnMiss(){
@@ -2930,7 +4156,7 @@ function newRound(forcedWord){
   state.maxM = (state.mode === "daily") ? 6 : df.m;
   state.diffMult = (state.mode === "daily") ? 1 : df.mult;
   state.boss = false;
-  if(!forcedWord && state.mode === "classic" && state.streak > 0 && state.streak % 5 === 0){
+  if(!forcedWord && state.mode === "classic" && state.streak > 0 && state.streak % 4 === 0){ /* v5.41: boss moi 4 streak */
     const nextK = BOSS_KINDS[((state.bossN || 0)) % BOSS_KINDS.length];
     let cands = TOPICS[state.topic].filter(w => w.length >= (nextK.minLen || 9));
     if(!cands.length) cands = TOPICS[state.topic].filter(w => w.length >= 9);
@@ -3037,6 +4263,40 @@ function renderHud(){
   $("hudStreak").textContent = state.streak + " (x" + mult() + ")";
   $("hudMisses").textContent = state.misses + "/" + state.maxM;
   $("missesHud").classList.toggle("hot", state.misses >= state.maxM - 2);
+  renderBossMap(); /* v5.41 */
+  /* v5.43: ambient tran boss - nhuom do man choi, cuong no cang gat */
+  try{
+    const br = !!(state.boss && state.screen === "game" && !state.over);
+    document.body.classList.toggle("bossRound", br);
+    document.body.classList.toggle("enraged", br && bossEnraged());
+  }catch(e){}
+}
+/* v5.41: minimap 4 cham -> icon boss ke tiep, biet luc nao sap gap boss */
+const BOSS_EMO = { wolf:"\u{1F43A}", fox:"\u{1F98A}", bear:"\u{1F43B}", eagle:"\u{1F985}", snake:"\u{1F40D}", shark:"\u{1F988}", robot:"\u{1F916}", witch:"\u{1F9D9}", dragon:"\u{1F409}", boar:"\u{1F417}" };
+let _bmLastProg = -1;
+function renderBossMap(){
+  const el = $("bossMap"); if(!el) return;
+  if(state.mode !== "classic"){ el.classList.add("hidden"); return; }
+  el.classList.remove("hidden");
+  const nextK = BOSS_KINDS[(state.bossN || 0) % BOSS_KINDS.length];
+  const prog = state.boss ? 4 : (state.streak % 4);
+  let dots = "";
+  for(let i=0;i<4;i++) dots += '<span class="bmDot' + (i < prog ? " on" : "") + '"></span>';
+  const icon = state.boss ? (BOSS_EMO[bossKind().id] || "⚔") : (BOSS_EMO[nextK.id] || "⚔");
+  const lbl = state.boss ? "BOSS!" : (prog === 3 ? "SẮP!" : "BOSS");
+  el.classList.toggle("ready", !state.boss && prog === 3);
+  el.classList.toggle("fight", !!state.boss);
+  el.innerHTML = '<span class="bmWrap"><span class="bmLbl">' + lbl + '</span>' + dots + '<span class="bmIcon">' + icon + '</span></span>';
+  el.title = state.boss ? ("Đang đấu " + bossKind().name) : ("Còn " + (4 - prog) + " từ nữa gặp " + nextK.name);
+  /* v5.43: vua cham 3/4 -> canh bao lon + tieng boss gam xa */
+  if(!state.boss && prog === 3 && _bmLastProg !== 3 && _bmLastProg !== -1){
+    try{
+      const c = center(el);
+      floatText(c.x, c.y + 34, "⚔ " + nextK.name + " SẮP XUẤT HIỆN!", "#C05B41", 17);
+      sfx.bossVoice(nextK.id, 0.75); /* gam tu xa */
+    }catch(e){}
+  }
+  _bmLastProg = state.boss ? 4 : prog;
 }
 function renderKeys(){
   for(let i=65; i<=90; i++){
@@ -3184,6 +4444,12 @@ function guess(L){
   ensureAudio();
   wake();
   const keyEl = $("key_" + L);
+  /* v5.37: spatial pan - phim ben trai ban phim keu ben trai, ben phai keu ben phai */
+  let keyPan = 0;
+  if(keyEl && keyEl.getBoundingClientRect){
+    try{ keyPan = ((center(keyEl).x / window.innerWidth) * 2 - 1) * 0.75; }catch(e){ keyPan = 0; }
+  }
+  keyRipple(keyEl); /* v5.37: song lan toa tren phim */
 
   if(state.word.includes(L)){
     state.revealed.add(L);
@@ -3194,7 +4460,7 @@ function guess(L){
     awardPts(pts);
     state.combo += 1;
     if(state.combo === 4 && !feverOn()) feverStart();
-    sfx.good(state.combo);
+    sfx.good(state.combo, keyPan);
     sfx.oink(1.15 + Math.min(state.combo,6)*0.06, 1);
     flyLetter(L, keyEl, true);
     pigReact(state.boss ? "punt" : "hop", 420); /* v5.22: boss round -> pig lao toi sut */
@@ -3267,8 +4533,9 @@ function guess(L){
     state.wrongSet.add(L);
     state.history.push(0);
     state.combo = 0;
-    sfx.bad();
+    sfx.bad(keyPan);
     sfx.oink(0.7, 1);
+    keySmoke(keyEl); /* v5.37: boc khoi do khi sai */
     if(state.mode === "time"){
       ta.left -= 4;
       const cc = center($("sceneWrap"));
@@ -3584,7 +4851,7 @@ const run = {
   y:0, vy:0, dist:0, score:0, hi:0, speed:3.4, duck:false,
   obs:[], clouds:[], nextIn:140, milestone:0,
   coins:[], got:0, nextCoinIn:420,
-  pups:[], nextPupIn:900, shield:0, magUntil:0, dblUntil:0, _djUsed:false, _invUntil:0,
+  pups:[], nextPupIn:900, shield:0, magUntil:0, dblUntil:0, starUntil:0, rushUntil:0, _djUsed:false, _invUntil:0, /* v5.41: star + rush */
   fx:[], _msT:0, _dieT:0, _msBurst:false, /* v5.35 */
 };
 const RUNPERK = {
@@ -3609,7 +4876,7 @@ function resetRun(){
   run.fx = []; run._msT = 0; run._dieT = 0; run._msBurst = false; /* v5.35 */
   run.obs = []; run.nextIn = 140; run.milestone = 0;
   run.coins = []; run.got = 0; run.nextCoinIn = 420;
-  run.pups = []; run.nextPupIn = 900; run.magUntil = 0; run.dblUntil = 0; run._djUsed = false; run._invUntil = 0;
+  run.pups = []; run.nextPupIn = 900; run.magUntil = 0; run.dblUntil = 0; run.starUntil = 0; run.rushUntil = 0; run._djUsed = false; run._invUntil = 0;
   run.shield = runPerk().lives || 0;
   $("runCoins").textContent = "0";
   run.clouds = [{x:200,y:40},{x:520,y:70},{x:700,y:30}];
@@ -3630,18 +4897,33 @@ function runJump(){
   run.started = true;
   const pk = runPerk();
   const jv = -11.6 * (pk.jump || 1);
-  if(run.y === 0){ run.vy = jv; run._fast = false; run._djUsed = false; sfx.hop(); if(pk.fly) run._flapT = performance.now(); }
+  if(run.y === 0){ run.vy = jv; run._fast = false; run._djUsed = false; sfx.hop(); if(pk.fly) run._flapT = performance.now(); runDust(6, 1); /* v5.37: bui nhay */ }
   else if(!run._djUsed && (performance.now() < run.dblUntil || pk.dbljump) && run.vy > -6){
     /* v5.25: rong dung nhanh nay (double jump 1 lan) - BO flap vo han (nhay lien tuc) */
     run.vy = jv * 0.92; run._djUsed = true; run._fast = false; sfx.hop();
     if(pk.fly) run._flapT = performance.now();
   }
 }
+/* v5.37: hat bui tiep dat/nhay tai chan nhan vat */
+function runDust(n, up){
+  if(reduced() || !settings.parts) return;
+  run.fx = run.fx || [];
+  const gy = RUN.groundY;
+  for(let i=0;i<n;i++){
+    run.fx.push({
+      x: RUN.pigX + 4 + Math.random()*32, y: gy - 2 - Math.random()*4,
+      vx: (Math.random()-0.5)*2.4 - run.speed*0.25,
+      vy: -(0.5 + Math.random()*1.4)*(up||1),
+      life: 0.8, decay: 0.04 + Math.random()*0.02,
+      size: 2 + Math.random()*3, color: isDark() ? "#5C574A" : "#C9C4B6",
+    });
+  }
+}
 function runHit(){
   if(run.over) return;
   run.over = true;
   run.duck = false; run._jHold = false;
-  sfx.thud(); sfx.bad();
+  sfx.thud(-0.55); sfx.bad(-0.55); /* v5.37: pig ben trai man -> pan trai */
   shake("md");
   /* v5.35: no vong xoay + flash do khi chet */
   run._dieT = performance.now();
@@ -3697,7 +4979,10 @@ function updateRun(){
   else { gJ = 0.55; }
   run.vy += gJ * fr; run.y += run.vy * fr;
   if(pk.fly && run.y < -172){ run.y = -172; if(run.vy < 0) run.vy = 0; run._ceil = true; } /* v5.23: tran bay | v5.25: danh dau cham tran */
-  if(run.y > 0){ run.y = 0; run.vy = 0; run._fast = false; run._djUsed = false; run._ceil = false; }
+  if(run.y > 0){
+    if(run.vy > 3) runDust(Math.min(10, 4 + Math.floor(run.vy)), 1.3); /* v5.37: bui tiep dat theo luc roi */
+    run.y = 0; run.vy = 0; run._fast = false; run._djUsed = false; run._ceil = false;
+  }
   const spTarget = Math.min(9.5, 3.4 + Math.floor(run.score/500)*0.9*(pk.rampMul||1));
   run.speed += (spTarget - run.speed) * 0.02 * fr;
   run.dist += run.speed * fr;
@@ -3716,20 +5001,21 @@ function updateRun(){
   if(run.nextCoinIn <= 0){
     if(run.obs.some(o => o.x + o.w > RUN.W - 60)){ run.nextCoinIn = 100; }
     else {
-      run.nextCoinIn = 360 + Math.random()*360;
-      const n = 5;
-      const yy = RUN.groundY - 84;
+      const rush = _now < run.rushUntil; /* v5.41: COIN RUSH - mua xu day dac */
+      run.nextCoinIn = rush ? 90 : 360 + Math.random()*360;
+      const n = rush ? 7 : 5;
+      const yy = RUN.groundY - (rush ? 60 - Math.random()*50 : 84);
       for(let i=0;i<n;i++){
-        run.coins.push({x: RUN.W + 30 + i*26, y: yy});
+        run.coins.push({x: RUN.W + 30 + i*26, y: yy + (rush ? Math.sin(i*0.9)*14 : 0)});
       }
       const span = (n-1)*26;
-      if(run.nextIn < span + 160) run.nextIn = span + 160 + Math.random()*80;
+      if(!rush && run.nextIn < span + 160) run.nextIn = span + 160 + Math.random()*80;
     }
   }
   run.nextPupIn -= run.speed * fr;
   if(run.nextPupIn <= 0 && run.score > 60){
     if(run.obs.some(o=>o.x+o.w>RUN.W-90) || run.coins.some(c=>c.x>RUN.W-90)){ run.nextPupIn = 120; }
-    else { const tp=["shield","magnet","dbl"]; run.pups.push({type:tp[Math.floor(Math.random()*3)], x:RUN.W+30, y:RUN.groundY-70-Math.random()*40}); run.nextPupIn = 1500 + Math.random()*1400; }
+    else { const tp=["shield","magnet","dbl","shield","magnet","dbl","star","rush"]; /* v5.41: star/rush hiem hon */ run.pups.push({type:tp[Math.floor(Math.random()*tp.length)], x:RUN.W+30, y:RUN.groundY-70-Math.random()*40}); run.nextPupIn = 1500 + Math.random()*1400; }
   }
   const gy = RUN.groundY;
   const pl = RUN.pigX + 24, pr = RUN.pigX + 70;
@@ -3744,6 +5030,12 @@ function updateRun(){
     const pad = flying ? 4 : 12;
     if(pr > o.x && pl < o.x + o.w && pBot > oTop + pad && pTop < oBot - pad){
       if(_now < run._invUntil){ /* invuln */ }
+      else if(_now < run.starUntil){ /* v5.41: STAR - dam xuyen, pha tan chuong ngai */
+        const opan = ((o.x / RUN.W) * 2 - 1) * 0.8;
+        sfx.thud(opan); sfx.coin(opan);
+        for(let i=0;i<10;i++){ const a = Math.PI*2*i/10; run.fx.push({x:o.x + o.w/2, y:(o.y !== undefined ? o.y : gy - o.h/2), vx:Math.cos(a)*2.6, vy:Math.sin(a)*2.6-1, life:1, decay:0.035, size:3, color: i%2 ? "#E7C24A" : "#FFF6C9"}); }
+        o.x = -999;
+      }
       else if(run.shield > 0){ run.shield--; run._invUntil = _now + 700; o.x = -999; sfx.freezeUse(); }
       else { runHit(); }
     }
@@ -3760,7 +5052,8 @@ function updateRun(){
       c.got = true;
       run.got += coinGain;
       $("runCoins").textContent = run.got;
-      sfx.coin();
+      sfx.coin(((c.x / RUN.W) * 2 - 1) * 0.8); /* v5.37: pan theo vi tri xu */
+      coinSparks(c.x + 6, c.y + 6);            /* v5.37: hat vang bay ve HUD */
     }
   }
   for(const pu of run.pups){
@@ -3769,20 +5062,59 @@ function updateRun(){
       pu.got = true;
       if(pu.type==="shield") run.shield += 1;
       else if(pu.type==="magnet") run.magUntil = _now + 8000;
+      else if(pu.type==="star"){ run.starUntil = _now + 5000; sfx.win(); } /* v5.41: bat tu 5s */
+      else if(pu.type==="rush"){ run.rushUntil = _now + 6000; run.nextCoinIn = 0; } /* v5.41: mua xu 6s */
       else run.dblUntil = _now + 8000;
-      sfx.powerup();
+      sfx.powerup(((pu.x / RUN.W) * 2 - 1) * 0.8); /* v5.37: pan theo vi tri */
     }
   }
   run.pups = run.pups.filter(p => p.x > -30 && !p.got);
   run.coins = run.coins.filter(c => c.x > -40 && !c.got);
   run.obs = run.obs.filter(o => o.x > -80);
 }
+/* v5.37: hat vang lap lanh bay tu dong xu ve HUD coin */
+function coinSparks(x, y){
+  if(reduced() || !settings.parts) return;
+  run.fx = run.fx || [];
+  let tx = RUN.W * 0.5, ty = -6; /* fallback: bay len mep tren */
+  try{
+    const cv = $("runCanvas"), hud = $("runCoins");
+    const cr = cv.getBoundingClientRect(), hr = hud.getBoundingClientRect();
+    if(cr.width > 0){
+      tx = ((hr.left + hr.width/2) - cr.left) * (RUN.W / cr.width);
+      ty = ((hr.top + hr.height/2) - cr.top) * (RUN.H / cr.height);
+    }
+  }catch(e){}
+  /* v5.42: cap hat homing - luc Coin Rush an xu lien tuc, tranh thanh "dong song" hat gay roi mat */
+  let homing = 0;
+  for(const p of run.fx) if(p.home) homing++;
+  const n = homing > 26 ? 1 : homing > 14 ? 3 : 6;
+  for(let i=0;i<n;i++){
+    run.fx.push({
+      home:1, x, y, tx, ty,
+      vx:(Math.random()-0.5)*3, vy:-(1+Math.random()*2),
+      life:1, decay:0.002, size:2+Math.random()*2,
+      color: i%2 ? "#E7C24A" : "#C9A227", spd: 8+Math.random()*3,
+    });
+  }
+}
+/* v5.41: buff theo gio - sap het (<3s) nhap nhay cham, gan can (<1.2s) nhay manh, het thi tat */
+function runBlinkOn(until, t){
+  const rem = until - t;
+  if(rem <= 0) return false;
+  if(rem < 1200) return Math.floor(t/80) % 2 === 0;
+  if(rem < 3000) return Math.floor(t/200) % 2 === 0;
+  return true;
+}
 function drawPup(g, type, x, y){
-  const col = type==="shield"?"#5AB4DC":type==="magnet"?"#D9584B":"#6FB84E";
+  const col = type==="shield"?"#5AB4DC":type==="magnet"?"#D9584B":type==="star"?"#E7C24A":type==="rush"?"#D97757":"#6FB84E";
   g.fillStyle = col; g.fillRect(x, y, 22, 22);
   g.fillStyle = "rgba(255,255,255,.28)"; g.fillRect(x, y, 22, 5);
+  if(type==="star"){ /* v5.41: vien lap lanh */
+    g.save(); g.shadowColor = "#E7C24A"; g.shadowBlur = 8; g.strokeStyle = "#FFF6C9"; g.lineWidth = 1.5; g.strokeRect(x+1, y+1, 20, 20); g.restore();
+  }
   g.fillStyle = "#FFFFFF"; g.font = "bold 14px 'Courier New'"; g.textAlign = "center"; g.textBaseline = "middle";
-  g.fillText(type==="shield"?"S":type==="magnet"?"M":"2", x+11, y+12);
+  g.fillText(type==="shield"?"S":type==="magnet"?"M":type==="star"?"★":type==="rush"?"$":"2", x+11, y+12);
   g.textAlign = "start"; g.textBaseline = "alphabetic";
 }
 function drawRunner(t){
@@ -3806,6 +5138,18 @@ function drawRunner(t){
     g.fillRect(c.x, c.y, 34, 8); g.fillRect(c.x+8, c.y-6, 20, 8);
     if(run.started && !run.over){ c.x -= run.speed*0.25*(run._fr||1); }
     if(c.x < -60){ c.x = RUN.W + 30; c.y = 20 + Math.random()*60; }
+  }
+  /* v5.37: net gio (speed lines) chay ngang khi toc do cao */
+  if(run.started && !run.over && run.speed > 6.2 && !reduced()){
+    const nsl = Math.min(8, 3 + Math.floor((run.speed - 6.2) * 2));
+    g.strokeStyle = night ? "rgba(240,238,230,.25)" : "rgba(255,255,255,.85)";
+    g.lineWidth = 2;
+    for(let i=0;i<nsl;i++){
+      const ly = 20 + ((i*83) % 190);
+      const lx = RUN.W - (((t * run.speed * 0.45) + i*337) % (RUN.W + 160));
+      const ln = 46 + (i%3)*30;
+      g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + ln, ly); g.stroke();
+    }
   }
   g.strokeStyle = INK; g.lineWidth = 2;
   g.beginPath(); g.moveTo(0, gy+2); g.lineTo(RUN.W, gy+2); g.stroke();
@@ -3840,7 +5184,7 @@ function drawRunner(t){
   /* ---- v5.35: RUNNER FX ---- */
   if(!run.fx) run.fx = [];
   /* tia hut coin khi magnet */
-  if(performance.now() < run.magUntil && !run.over){
+  if(runBlinkOn(run.magUntil, performance.now()) && !run.over){ /* v5.41: nhay khi sap het */
     g.strokeStyle = "rgba(217,88,75,.28)"; g.lineWidth = 1;
     for(const c of run.coins){
       const mdx = (RUN.pigX+40) - c.x, mdy = (gy + run.y - 28) - c.y;
@@ -3870,8 +5214,23 @@ function drawRunner(t){
   }
   /* update + ve particle (chay ca khi over de no het) */
   for(const p of run.fx){
+    /* v5.37: hat vang homing ve HUD coin */
+    if(p.home){
+      const hdx = p.tx - p.x, hdy = p.ty - p.y, hd = Math.hypot(hdx,hdy) || 1;
+      p.vx += (hdx/hd) * 1.1 * (run._fr||1); p.vy += (hdy/hd) * 1.1 * (run._fr||1);
+      const vm = Math.hypot(p.vx,p.vy);
+      if(vm > (p.spd||8)){ p.vx *= (p.spd||8)/vm; p.vy *= (p.spd||8)/vm; }
+      if(hd < 16 || p.y < -4){
+        p.life = 0;
+        try{ const hb = $("runCoins"); hb.classList.remove("bump"); void hb.offsetWidth; hb.classList.add("bump"); }catch(e){}
+      }
+    }
     p.x += p.vx * (run._fr||1); p.y += p.vy * (run._fr||1); p.life -= p.decay * (run._fr||1);
-    if(p.life > 0){ g.globalAlpha = Math.min(1, p.life); g.fillStyle = p.color; g.fillRect(p.x, p.y, p.size, p.size); }
+    if(p.life > 0){
+      g.globalAlpha = Math.min(1, p.life); g.fillStyle = p.color;
+      if(p.home){ g.save(); g.shadowColor = "#E7C24A"; g.shadowBlur = 6; g.fillRect(p.x, p.y, p.size, p.size); g.restore(); }
+      else g.fillRect(p.x, p.y, p.size, p.size);
+    }
   }
   g.globalAlpha = 1;
   run.fx = run.fx.filter(p => p.life > 0);
@@ -3935,16 +5294,48 @@ function drawRunner(t){
   };
   if(run.speed > 7 && run.started && !run.over && !reduced()){ drawChar(-14, 0.12); drawChar(-26, 0.05); } /* afterimage toc do cao */
   drawChar(0, 1);
+  /* v5.37: giap = bong bong nang luong phat sang (radial glow + vien neon + highlight xoay) */
   if(run.shield > 0 && !run.over){
-    g.strokeStyle = "rgba(90,180,220,.9)"; g.lineWidth = 2.5;
-    g.beginPath(); g.arc(RUN.pigX + 44, gy + run.y - 26, 36, 0, Math.PI*2); g.stroke();
+    const scx = RUN.pigX + 44, scy = gy + run.y - 26;
+    const srad = 36 + Math.sin(t/170) * 3; /* tho phap phong */
+    const sgrad = g.createRadialGradient(scx, scy, srad*0.5, scx, scy, srad);
+    sgrad.addColorStop(0, "rgba(90,180,220,0)");
+    sgrad.addColorStop(0.72, "rgba(90,180,220,.10)");
+    sgrad.addColorStop(1, "rgba(150,220,250,.38)");
+    g.fillStyle = sgrad;
+    g.beginPath(); g.arc(scx, scy, srad, 0, Math.PI*2); g.fill();
+    g.save();
+    g.shadowColor = "#5AB4DC"; g.shadowBlur = 14;
+    g.strokeStyle = "rgba(150,220,250,.9)"; g.lineWidth = 2;
+    g.beginPath(); g.arc(scx, scy, srad, 0, Math.PI*2); g.stroke();
+    const sang = t/280;
+    g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 3;
+    g.beginPath(); g.arc(scx, scy, srad, sang, sang + 0.9); g.stroke();
+    g.beginPath(); g.arc(scx, scy, srad, sang + Math.PI, sang + Math.PI + 0.9); g.stroke();
+    g.restore();
+  }
+  /* v5.41: STAR - hao quang vang bat tu + tia lap lanh, nhay khi sap het */
+  if(run.starUntil && !run.over && runBlinkOn(run.starUntil, performance.now())){
+    const tcx = RUN.pigX + 44, tcy = gy + run.y - 26;
+    const trad = 42 + Math.sin(t/110) * 4;
+    g.save();
+    g.shadowColor = "#E7C24A"; g.shadowBlur = 16;
+    g.strokeStyle = "rgba(231,194,74,.95)"; g.lineWidth = 2.5;
+    g.beginPath(); g.arc(tcx, tcy, trad, 0, Math.PI*2); g.stroke();
+    const tang = t/200;
+    g.strokeStyle = "rgba(255,246,201,.9)"; g.lineWidth = 3.5;
+    g.beginPath(); g.arc(tcx, tcy, trad, tang, tang + 0.7); g.stroke();
+    g.restore();
+    if(Math.random() < 0.45 && !reduced()) run.fx.push({x:tcx + (Math.random()-0.5)*64, y:tcy + (Math.random()-0.5)*52, vx:(Math.random()-0.5)*1.2, vy:-0.8-Math.random(), life:0.7, decay:0.05, size:2+Math.random()*2, color: Math.random()<0.5 ? "#E7C24A" : "#FFF6C9"});
   }
   const _nowB = performance.now(); let _bx = 12;
   const badge = (on, col, ch)=>{ if(!on) return; g.fillStyle = col; g.fillRect(_bx, 8, 20, 20); g.fillStyle = "#fff"; g.font = "bold 13px 'Courier New'"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, _bx+10, 19); g.textAlign = "start"; g.textBaseline = "alphabetic"; _bx += 26; };
   if(run.started && !run.over){
     badge(run.shield > 0, "#5AB4DC", "S");
-    badge(_nowB < run.magUntil, "#D9584B", "M");
-    badge(_nowB < run.dblUntil || (RUNPERK[character]&&RUNPERK[character].dbljump), "#6FB84E", "2");
+    badge(runBlinkOn(run.magUntil, _nowB), "#D9584B", "M");                /* v5.41: nhay khi sap het */
+    badge((RUNPERK[character]&&RUNPERK[character].dbljump) ? true : runBlinkOn(run.dblUntil, _nowB), "#6FB84E", "2");
+    badge(runBlinkOn(run.starUntil, _nowB), "#E7C24A", "★");               /* v5.41 */
+    badge(runBlinkOn(run.rushUntil, _nowB), "#D97757", "$");               /* v5.41 */
     badge(!!(RUNPERK[character]&&RUNPERK[character].fly), "#D97757", "F"); /* v5.23: rong bay */
   }
   g.textAlign = "center";
