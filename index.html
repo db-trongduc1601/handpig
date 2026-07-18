@@ -250,7 +250,7 @@
     width:56px; height:52px; border-radius:10px; border:1px solid var(--line);
     background:var(--card); color:var(--ink); font-family:"Courier New",monospace;
     font-size:20px; font-weight:bold; cursor:pointer; transform-origin:50% 100%;
-    transition:transform .15s var(--spring), background .1s, border-color .1s, filter .3s, opacity .3s;
+    transition:transform .15s var(--spring), background .1s, border-color .1s, filter .3s, opacity .3s, box-shadow .15s var(--spring);
     position:relative; overflow:hidden; /* v5.37: chua ripple */
   }
   /* v5.37: ripple song lan toa khi bam phim */
@@ -309,8 +309,14 @@
   }
   .key.blown{transition:transform .55s var(--spring), background .1s, border-color .1s, filter .3s, opacity .3s;}
   .key.shakeNo{animation:keyNo .3s linear;}
-  .key:hover:not(:disabled){transform:translateY(-2px); border-color:var(--accent);}
-  .key:active:not(:disabled){transform:scale(1.12,.82);}
+  /* v5.47: 3D pop-out - phim nho cao + bong do nhoe khi hover/cham */
+  .key:hover:not(:disabled){
+    transform:translateY(-4px) scale(1.08);
+    border-color:var(--accent);
+    box-shadow:0 9px 16px rgba(61,57,41,.28), 0 3px 5px rgba(217,119,87,.25);
+    z-index:2;
+  }
+  .key:active:not(:disabled){transform:scale(1.12,.82); box-shadow:0 2px 4px rgba(61,57,41,.2);}
   .key:disabled{cursor:default;}
   /* v5.37: phim dung = neon xanh la pulse */
   .key.ok{background:var(--good); border-color:#39FF14; color:#fff; animation:keyPop .35s var(--spring), neonGreen 1s ease-out;}
@@ -380,6 +386,42 @@
   /* ---- v5.32: word row juice ---- */
   .slot.land{animation:slotLand .32s var(--spring);}
   @keyframes slotLand{0%{transform:scale(1.4,.6);}55%{transform:scale(.85,1.18);}100%{transform:scale(1,1);}}
+  /* v5.47: tia hat dan duong tu phim den slot */
+  .fx-trailDot{
+    position:fixed; z-index:69; pointer-events:none; width:5px; height:5px; border-radius:50%;
+    background:radial-gradient(circle, #FFF6C9 0%, #E7C24A 70%);
+    box-shadow:0 0 7px 2px rgba(231,194,74,.85);
+  }
+  /* v5.47: vien do nguy kich co bop theo nhip tim (lub-dub 0.9s = dung chu ky sfx.heart) */
+  #heartVig{
+    display:none; position:fixed; inset:0; z-index:66; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(192,30,18,.55) 100%);
+  }
+  body.critical #heartVig{display:block; animation:heartVigBeat .9s ease-in-out infinite;}
+  @keyframes heartVigBeat{
+    0%,100%{opacity:.22; transform:scale(1.03);}
+    12%{opacity:.85; transform:scale(1);}
+    24%{opacity:.38;}
+    34%{opacity:.7;}
+    52%{opacity:.28;}
+  }
+  /* v5.47: mua sao bang chao mung FEVER */
+  .fx-meteor{
+    position:fixed; z-index:68; pointer-events:none; height:3px; border-radius:3px;
+    background:linear-gradient(90deg, rgba(255,246,201,0), rgba(255,200,80,.95), #FFF6C9);
+    box-shadow:0 0 8px 2px rgba(255,180,60,.6);
+    transform:rotate(33deg);
+    animation:meteorFall var(--mtd,.8s) linear forwards;
+  }
+  @keyframes meteorFall{
+    0%{transform:rotate(33deg) translateX(0); opacity:0;}
+    10%{opacity:1;}
+    100%{transform:rotate(33deg) translateX(110vmax); opacity:0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .fx-trailDot,.fx-meteor{display:none;}
+    body.critical #heartVig{animation:none; opacity:.4;}
+  }
   /* v5.46: COMBO VO - slot rung rinh tat ngam anh sang */
   #wordRow.combolost .slot{animation:slotDroop .75s ease-out;}
   @keyframes slotDroop{
@@ -543,6 +585,7 @@
   @keyframes kbBack{0%{transform:translateX(0);}30%{transform:translateX(-16px);}100%{transform:translateX(0);}}
   /* ==== v5.46: PORTAL / DIMENSION SHIFT - dau truong doi chieu khong gian ==== */
   #sceneWrap.cosmic #scene{animation:cosmicHue 7s linear infinite;}
+  #runWrap.cosmic canvas{animation:cosmicHue 7s linear infinite;} /* v5.47: cosmic runner */
   @keyframes cosmicHue{
     0%{filter:hue-rotate(0deg) saturate(1.2);}
     50%{filter:hue-rotate(200deg) saturate(1.5) brightness(1.06);}
@@ -1198,6 +1241,7 @@
     <feDisplacementMap in="SourceGraphic" in2="hw" scale="14"/>
   </filter>
 </svg>
+<div id="heartVig"></div>
 <canvas id="fx"></canvas>
 
 <!-- ART_DATA_SLOT: pixel-art word images go here as window.ART_IMG -->
@@ -1834,6 +1878,24 @@ function mult(){ return state.streak >= 6 ? 3 : state.streak >= 3 ? 2 : 1; }
 /* ---------------- FEVER MODE (v5.19) ----------------
    Combo bar full (4 dung lien tiep) -> FEVER 10s:
    diem x2, coins x3 khi thang, 1 lan sai duoc tha (FEVER SAVE, tat fever). */
+/* v5.47: mua sao bang vang/cam roi cheo trai-tren -> phai-duoi trong 1.5s dau fever */
+function feverMeteors(){
+  if(reduced() || !settings.parts) return;
+  try{
+    for(let i=0;i<12;i++){
+      const m = document.createElement("div");
+      m.className = "fx-meteor";
+      m.style.width = (40 + Math.random()*70) + "px";
+      m.style.left = (-120 + Math.random()*window.innerWidth*0.7) + "px";
+      m.style.top = (-60 + Math.random()*window.innerHeight*0.45) + "px";
+      m.style.setProperty("--mtd", (0.6 + Math.random()*0.35) + "s");
+      m.style.animationDelay = (Math.random()*1.1) + "s";
+      document.body.appendChild(m);
+      m.addEventListener("animationend", ()=> m.remove());
+      setTimeout(()=>{ if(m.parentNode) m.remove(); }, 2400);
+    }
+  }catch(e){}
+}
 const FEVER_MS = 10000;
 const fever = { until:0, save:0, count:0, _expired:true };
 function feverOn(){ return performance.now() < fever.until; }
@@ -1843,6 +1905,7 @@ function feverStart(){
   fever.count += 1;
   fever._expired = false;
   document.body.classList.add("fever");
+  feverMeteors(); /* v5.47: mua sao bang chao mung */
   const lbl = $("comboLbl"); if(lbl) lbl.textContent = "FEVER!";
   flashScreen("rgba(201,162,39,.4)");
   const c = center($("sceneWrap"));
@@ -1875,6 +1938,11 @@ function updateFever(t){
 const bossFx = { anim:null, hitT:0, pigHitT:0, introT:0, dieT:0, _introDone:false, _db1:false, _db2:false, _stomp:false };
 function bossHP(){ return [...new Set(state.word.split(""))].filter(ch => !state.revealed.has(ch)).length; }
 function bossMaxHP(){ return Math.max(1, new Set(state.word.split("")).size); }
+/* v5.47: boss nhieu tu - HP TONG = (so tu con lai + tien do tu hien tai) / tong so tu */
+function bossHPFrac(){
+  const N = state.bossWords || 1, i = state.bossWordIdx || 0;
+  return Math.max(0, Math.min(1, ((N - 1 - i) + bossHP() / bossMaxHP()) / N));
+}
 function bossThrow(type){
   bossFx.anim = { type, t0: performance.now(), dur: type === "up" ? bossKind().up : bossKind().down, hit:false };
   /* v5.23: boss rong khai hoa = phun lua tu mieng */
@@ -2013,7 +2081,7 @@ const BOSS_KINDS = [
   {id:"boar",  name:"VUA HEO RỪNG", up:500, down:380, hh:114, winMult:10, minLen:10, enrTh:0.5},
 ];
 function bossKind(){ return BOSS_KINDS[Math.max(0, (state.bossN || 1) - 1) % BOSS_KINDS.length]; }
-function bossEnraged(){ return state.boss && bossHP() / bossMaxHP() <= (bossKind().enrTh || 0.34); }
+function bossEnraged(){ return state.boss && bossHPFrac() <= (bossKind().enrTh || 0.34); } /* v5.47: theo HP tong */
 /* ---- FX PACK v5.22: motion idle rieng cho tung boss ---- */
 function bossMotion(K, t, rage){
   const sp = rage ? 0.62 : 1; /* rage -> nhanh hon */
@@ -2115,6 +2183,23 @@ function drawBossArena(t){
       }
     }
   }
+  /* v5.47: VO GIAP - tut duoi 50% HP tong -> manh vo bay tung toe + kinh vo + giat man */
+  if(!bossFx._shatter50 && !state.over && bossHPFrac() <= 0.5){
+    bossFx._shatter50 = true;
+    try{ sfx.shatter(); }catch(e){}
+    shake("lg");
+    bossFx.hitT = performance.now(); /* sprite chop trang/do */
+    if(!reduced() && settings.parts){
+      cBurst(BOSS_X + 55, BOSS_Y + 55, {count:26, speed:3.8, up:2.2, size:4, colors:["#8A8578","#C9A227","#5C574A","#E7C24A"]});
+      try{
+        const bpv = bossScreenPos(BOSS_X + 25, BOSS_Y + 40);
+        burst(bpv.x, bpv.y, {count:18, spread:160, size:8, colors:["#8A8578","#C9A227","#F0EEE6"]});
+        ringPulse(bpv.x, bpv.y, "rgba(231,194,74,.9)", 2);
+      }catch(e){}
+    }
+    try{ const cc = center($("sceneWrap")); floatText(cc.x, cc.y - 52, "🛡️ VỠ GIÁP!", "#E7C24A", 24); }catch(e){}
+    try{ vib([60,40,80]); }catch(e){}
+  }
   const M = bossMotion(K, t, rage);
   let by = BOSS_Y - (K.fly ? 16 : 0) + M.dy;
   let bx = BOSS_X + M.dx;
@@ -2166,7 +2251,7 @@ function drawBossArena(t){
   else if(K.fb){ K.fb(sctx, bx, by, 5, t, flash); }
   else { drawWolf(sctx, bx, by, 5, t, flash); }
   /* HP: boss goc TRAI-tren + TEN BOSS (pokemon style), pig goc PHAI-duoi */
-  drawHpBar(sctx, 18, 74, 150, 9, bossHP()/bossMaxHP(), "#C05B41", K.name || "BOSS");
+  drawHpBar(sctx, 18, 74, 150, 9, bossHPFrac(), "#C05B41", (K.name || "BOSS") + ((state.bossWords||1) > 1 ? " " + ((state.bossWordIdx||0)+1) + "/" + state.bossWords : "")); /* v5.47 */
   drawHpBar(sctx, 472, 281, 150, 8, Math.max(0, state.maxM - state.misses)/state.maxM, "#7D9B6A", "");
   /* bong: sut qua lai giua 2 con */
   const a = bossFx.anim;
@@ -2409,7 +2494,14 @@ const sfx = {
   },
   hint(){ tone("triangle", 520, 780, now(), 0.12, 0.12); this.oink(1.05, 1); },
   hop(){ tone("triangle", vary(700), 1050, now(), 0.07, 0.08); },
-  coin(pan){ const D = spDest(pan); tone("square", 988, 988, now(), 0.05, 0.08, D); tone("square", 1319, 1319, now()+0.05, 0.09, 0.08, D); },
+  /* v5.47: chain = chuoi an lien tuc -> tone cao dan (riu rit), reset khi ngung >1s */
+  coin(pan, chain){
+    const D = spDest(pan);
+    const m = Math.pow(1.0595, Math.min(chain || 0, 14)); /* +1 semitone moi xu, tran +14 */
+    tone("square", 988*m, 988*m, now(), 0.05, 0.08, D);
+    tone("square", 1319*m, 1319*m, now()+0.05, 0.09, 0.08, D);
+    if((chain||0) >= 10) tone("triangle", 1976*m, 1976*m, now()+0.05, 0.06, 0.04, D); /* lap lanh khi chuoi dai */
+  },
   reveal(){ const t=now(); [660,880,1174].forEach((f,i)=> tone("triangle", f, f, t+i*0.07, 0.13, 0.09)); },
   juggleTick(){ tone("square", vary(340,0.08), 340, now(), 0.03, 0.05); },
   snore(){ tone("sine", 140, 90, now(), 0.5, 0.04); tone("sawtooth", 150, 92, now(), 0.34, 0.03); },
@@ -2650,6 +2742,10 @@ function beatPulse(){
 /* ---------------- DOM JUICE ---------------- */
 const PALETTE = ["#D97757","#E68A73","#7D9B6A","#C9A227","#F0EEE6"];
 
+/* v5.47: HAPTIC - rung dien thoai theo ngu canh (PWA mobile) */
+function vib(pat){
+  try{ if(navigator.vibrate && settings.parts) navigator.vibrate(pat); }catch(e){}
+}
 function shake(intensity){
   if(reduced() || !settings.shake) return;
   const el = $("app");
@@ -2786,6 +2882,22 @@ function flyLetter(L, fromEl, correct){
     state.word.split("").forEach((ch, i)=>{
       if(ch !== L || !slots[i]) return;
       const to = center(slots[i]);
+      /* v5.47: tia hat dan duong ban thang tu phim den slot (soi day lien ket tay -> ket qua) */
+      if(!reduced() && settings.parts){
+        for(let d=0; d<7; d++){
+          const dot = document.createElement("div");
+          dot.className = "fx-trailDot";
+          dot.style.left = from.x + "px"; dot.style.top = from.y + "px";
+          document.body.appendChild(dot);
+          if(dot.animate){
+            dot.animate([
+              { transform:"translate(-50%,-50%) scale(1)", opacity:.95 },
+              { transform:"translate(calc(-50% + " + (to.x - from.x) + "px), calc(-50% + " + (to.y - from.y) + "px)) scale(.35)", opacity:0 },
+            ], { duration:230, delay:d*26, easing:"cubic-bezier(.2,.7,.4,1)", fill:"backwards" }).onfinish = ()=> dot.remove();
+          } else dot.remove();
+          setTimeout(()=>{ if(dot.parentNode) dot.remove(); }, 650);
+        }
+      }
       const el = document.createElement("div");
       el.className = "fx-l";
       el.textContent = L;
@@ -3299,6 +3411,7 @@ function updateKick(t){
             ringPulse(b.x1, b.y1, "rgba(125,255,176,.9)", 2);
             flashScreen("rgba(125,255,176,.22)");
             sfx.freezeUse();
+            vib([80]); /* v5.47: haptic cu do bong */
           }catch(e){}
         } else {
           seq.phase = "impact"; seq.t0 = t;
@@ -3496,7 +3609,7 @@ function loop(realT){
     }
     /* v5.32: tim dap 60bpm khi con 1 mang */
     if(!state.over && !seq.active && !winSeq.active && state.misses === state.maxM - 1 &&
-       Math.floor(t/900) !== Math.floor((t-16)/900)){ try{ sfx.heart(); shake("sm"); }catch(e){} } /* v5.45: camera dap theo nhip tim */
+       Math.floor(t/900) !== Math.floor((t-16)/900)){ try{ sfx.heart(); shake("sm"); vib([40,120,40]); }catch(e){} } /* v5.45+v5.47: camera + haptic dap theo tim */
     drawScene(t);
   }
   requestAnimationFrame(loop);
@@ -4323,6 +4436,10 @@ function newRound(forcedWord){
       forcedWord = cands[Math.floor(Math.random()*cands.length)];
       state.boss = true;
       state.bossN = (state.bossN || 0) + 1; /* xoay vong 3 boss */
+      /* v5.47: boss thu N phai giai N tu (soi 1 tu ... vua heo rung 10 tu) */
+      state.bossWords = ((state.bossN - 1) % BOSS_KINDS.length) + 1;
+      state.bossWordIdx = 0;
+      bossFx._shatter50 = false; /* v5.47: reset vo giap */
       bossFx.anim = null; bossFx.hitT = 0; bossFx.pigHitT = 0; bossFx.enragedShown = false;
       bossFx.introT = performance.now(); bossFx._introDone = false; /* v5.22 intro drop-in */
       bossFx.dieT = 0; bossFx._db1 = false; bossFx._db2 = false; bossFx._stomp = false;
@@ -4366,7 +4483,7 @@ function newRound(forcedWord){
   $("puRow").classList.toggle("hidden", state.mode === "daily");
   renderAll();
   if(state.boss){
-    bossBanner("⚔ " + (bossKind().name || "?") + " ⚔"); /* v5.33: banner truot ngang */
+    bossBanner("⚔ " + (bossKind().name || "?") + ((state.bossWords||1) > 1 ? " · " + state.bossWords + " TỪ" : "") + " ⚔"); /* v5.33 + v5.47 */
     sfx.powerup();
     kbFxStart(); /* v5.27+v5.29: boss tan cong ban phim dinh ky */
   }
@@ -4428,6 +4545,8 @@ function renderHud(){
     const br = !!(state.boss && state.screen === "game" && !state.over);
     document.body.classList.toggle("bossRound", br);
     document.body.classList.toggle("enraged", br && bossEnraged());
+    /* v5.47: con dung 1 mang -> vien do co bop theo nhip tim */
+    document.body.classList.toggle("critical", state.screen === "game" && !state.over && state.misses === state.maxM - 1);
   }catch(e){}
 }
 /* v5.41: minimap 4 cham -> icon boss ke tiep, biet luc nao sap gap boss */
@@ -4514,7 +4633,45 @@ function wake(){
   if(sleeping){ sleeping = false; pigReact("flinch", 300); }
 }
 
+/* v5.47: boss nhieu tu - giai xong 1 tu (chua phai tu cuoi) thi nap tu ke tiep, HP boss tut theo */
+function bossNextWord(){
+  const K = bossKind();
+  let cands = TOPICS[state.topic].filter(w => w.length >= (K.minLen || 9) && w !== state.word);
+  if(!cands.length) cands = TOPICS[state.topic].filter(w => w.length >= 9 && w !== state.word);
+  state.word = cands.length ? cands[Math.floor(Math.random()*cands.length)] : nextWord(state.topic);
+  state.revealed = new Set(); state.wrongSet = new Set(); state.dimmed = new Set();
+  state.misses = 0; state.hintsUsed = 0; state.combo = 0;
+  state.viUsed = false; state.revUsed = false;
+  $("viHintLine").classList.add("hidden"); $("viHintLine").textContent = "";
+  if(state.mode !== "daily"){ /* head-start giong newRound */
+    const rc = menuDiff === "easy" ? 3 : menuDiff === "hard" ? 1 : 2;
+    const uniq = [...new Set(state.word.split(""))];
+    shuffle(uniq).slice(0, Math.min(rc, Math.max(0, uniq.length - 1))).forEach(L => state.revealed.add(L));
+  }
+  state.history = [];
+  state.locked = false; state.over = false;
+  ball.visible = false; ball.x = 660;
+  shownLetters.clear();
+  hideReveal();
+  renderAll();
+}
 function handleWin(){
+  /* v5.47: boss nhieu tu - chua het tu thi CHUA thang */
+  if(state.boss && (state.bossWordIdx || 0) < (state.bossWords || 1) - 1){
+    state.bossWordIdx = (state.bossWordIdx || 0) + 1;
+    state.locked = true; /* chan input trong luc chuyen tu */
+    awardPts(Math.round(wordBonus() * mult() * 0.5)); /* thuong nho moi tu */
+    try{
+      const c = center($("sceneWrap"));
+      floatText(c.x, c.y - 60, "TỪ " + state.bossWordIdx + "/" + state.bossWords + " XONG!", "#C9A227", 22);
+      flashScreen("rgba(201,162,39,.22)");
+      sfx.reveal(); sfx.bossVoice(bossKind().id, 0.85);
+      bossThrow("up");
+      vib([30,40,30]);
+    }catch(e){}
+    setTimeout(()=>{ try{ bossNextWord(); }catch(e){} }, 750);
+    return;
+  }
   const bonus = wordBonus() * mult();
   awardPts(bonus);
   state.streak += 1;
@@ -4560,6 +4717,7 @@ function handleWin(){
     if(!reduced()) cBurst(BOSS_X + 5*BOSS_S, BOSS_Y + 5*BOSS_S, {count:30, speed:3.6, up:2.2, size:5, colors:["#C05B41","#C9A227","#F0EEE6"]});
     feverStart(); /* thang boss -> vao thang FEVER */
     dimShift.until = performance.now() + 6000; /* v5.46: ha boss -> mo cong khong gian 6s */
+    vib([60,40,60,40,140]); /* v5.47: haptic song chien thang */
     pig.x = pig.homeX; /* tra pig ve cho cu truoc win seq */
   }
   if(state.mode !== "time" && [5,10,15,20].indexOf(state.streak) !== -1){
@@ -5050,6 +5208,7 @@ function resetRun(){
 }
 function exitRunner(){
   run.active = false;
+  try{ $("runWrap").classList.remove("cosmic"); }catch(e){} /* v5.47 */
   state.screen = "menu";
   $("runnerScreen").classList.add("hidden");
   $("menuScreen").classList.remove("hidden");
@@ -5217,7 +5376,11 @@ function updateRun(){
       c.got = true;
       run.got += coinGain;
       $("runCoins").textContent = run.got;
-      sfx.coin(((c.x / RUN.W) * 2 - 1) * 0.8); /* v5.37: pan theo vi tri xu */
+      /* v5.47: chuoi an xu -> tone tang dan, ngung 1s reset */
+      const nowC = performance.now();
+      run._coinChain = (nowC - (run._coinChainT || 0) < 1000) ? (run._coinChain || 0) + 1 : 0;
+      run._coinChainT = nowC;
+      sfx.coin(((c.x / RUN.W) * 2 - 1) * 0.8, run._coinChain);
       coinSparks(c.x + 6, c.y + 6);            /* v5.37: hat vang bay ve HUD */
     }
   }
@@ -5303,6 +5466,29 @@ function drawRunner(t){
     g.fillRect(c.x, c.y, 34, 8); g.fillRect(c.x+8, c.y-6, 20, 8);
     if(run.started && !run.over){ c.x -= run.speed*0.25*(run._fr||1); }
     if(c.x < -60){ c.x = RUN.W + 30; c.y = 20 + Math.random()*60; }
+  }
+  /* v5.47: COSMIC RUNNER - Star hoac toc do cuc cao -> doi chieu khong gian + sao bay nguoc */
+  const cosmicOn = run.started && !run.over && !reduced() && settings.parts &&
+    (performance.now() < run.starUntil || run.speed >= 8.5);
+  try{
+    const rw = $("runWrap");
+    if(rw){
+      const wasC = rw.classList.contains("cosmic");
+      if(cosmicOn && !wasC){ rw.classList.add("cosmic"); try{ sfx.portal(); }catch(e){} }
+      else if(!cosmicOn && wasC) rw.classList.remove("cosmic");
+    }
+  }catch(e){}
+  if(cosmicOn){
+    const starCols = ["#FFFFFF","#BFD8FF","#FFF6C9","#DCB4FF"];
+    for(let i=0;i<16;i++){
+      let sx2 = ((i*191 + 37) - t * (0.12 + (i%3)*0.08) * run.speed) % RUN.W;
+      if(sx2 < 0) sx2 += RUN.W;
+      const sy2 = 8 + (i*67) % 165;
+      g.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(t/300 + i*1.7));
+      g.fillStyle = starCols[i % starCols.length];
+      g.fillRect(sx2, sy2, 1 + (i%3), 1 + (i%3));
+    }
+    g.globalAlpha = 1;
   }
   /* v5.37: net gio (speed lines) chay ngang khi toc do cao */
   if(run.started && !run.over && run.speed > 6.2 && !reduced()){
