@@ -1116,7 +1116,9 @@
   #duelVs{
     text-align:center; font-family:Georgia,serif; font-size:15px; letter-spacing:3px;
     color:var(--accent); font-weight:bold;
+    display:flex; align-items:center; justify-content:center; gap:10px; /* v5.50: cho trong tai */
   }
+  #duelRef{image-rendering:pixelated; width:62px; height:50px;} /* v5.50: trong tai heo */
   .duelPane{
     flex:1; background:var(--card); border:2px solid var(--line); border-radius:14px;
     padding:10px 6px 12px; position:relative;
@@ -1306,7 +1308,7 @@
   <div id="duelScreen" class="hidden">
     <button id="duelExit" title="ESC">&#10005;</button>
     <div class="duelPane" id="dp2"></div>
-    <div id="duelVs">&#9876; VS &#9876;</div>
+    <div id="duelVs"><canvas id="duelRef" width="120" height="96"></canvas><span id="duelVsTxt">&#9876; VS &#9876;</span></div>
     <div class="duelPane" id="dp1"></div>
     <div id="duelCtrls" class="hidden">
       <button class="pbtn primary" id="duelAgain">CHƠI LẠI</button>
@@ -2677,6 +2679,12 @@ const sfx = {
     tone("square", 520, 55, t + 0.05, 0.26, 0.07);
     tone("sine", 90, 32, t + 0.1, 0.3, 0.2); /* hut hang */
   },
+  /* v5.50: coi trong tai - trill 2 nhip kieu coi bong da */
+  refWhistle(){
+    const t = now();
+    fmTone("square", 2350, 2350, 28, 260, t, 0.2, 0.06);
+    fmTone("square", 2350, 2350, 28, 260, t + 0.26, 0.32, 0.06);
+  },
   /* v5.46: PORTAL - vut xoay chieu khong gian */
   portal(){
     const t = now(), E = echoDest();
@@ -3721,7 +3729,7 @@ function loop(realT){
     updateRun();
     drawRunner(t);
   } else if(state.screen === "duel2"){
-    /* v5.48: duel 2P thuan DOM - khong ve canvas */
+    drawDuelRef(t); /* v5.50: trong tai o vach chia */
   } else {
     if(seq.active) updateKick(t);
     if(winSeq.active) updateWinSeq(t);
@@ -5970,6 +5978,7 @@ function duel2Guess(pi, L){
     P.en = Math.min(DUEL_EN_MAX, (P.en || 0) + 1); /* v5.49: tich nang luong */
     duel2.tug = Math.max(-0.35, Math.min(0.35, duel2.tug + 0.05 * dir)); /* v5.49: don ep doi thu 5% */
     try{ sfx.good(2, 0); }catch(e){}
+    try{ duelRefReact("cheer", pi); }catch(e){} /* v5.50: trong tai co vu */
     if([...new Set(P.word.split(""))].every(ch => P.rev.has(ch))){ duel2End(pi); return; }
   } else {
     P.wrong.add(L); P.misses += 1;
@@ -5991,15 +6000,18 @@ function duel2Skill(pi, sk){
   if(sk === "freeze"){
     O.frozenUntil = nowT + 2000;
     try{ sfx.freezeUse(); }catch(e){}
+    try{ duelRefReact("laugh"); }catch(e){} /* v5.50: trong tai cuoi khoai chi */
     setTimeout(()=>{ try{ renderDuel2(); }catch(e){} }, 2080);
   } else if(sk === "shuffle"){
     O.shufUntil = nowT + 3000;
     O.shufOrder = shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
     try{ sfx.bossSkill2("witch"); }catch(e){}
+    try{ duelRefReact("laugh"); }catch(e){} /* v5.50 */
     setTimeout(()=>{ try{ O.shufOrder = null; renderDuel2(); }catch(e){} }, 3080);
   } else if(sk === "ink"){
     O.inkUntil = nowT + 4000;
     try{ sfx.bad(0); noise(now(), 0.25, 0.2, 500); }catch(e){}
+    try{ duelRefReact("card"); }catch(e){} /* v5.50: gio the vang + thoi coi */
     setTimeout(()=>{ try{ renderDuel2(); }catch(e){} }, 4080);
   }
   shake("sm");
@@ -6018,6 +6030,7 @@ function duel2End(winnerIdx){
     burst(window.innerWidth/2, window.innerHeight/2, {count:22, spread:170, size:9, colors:["#A8E063","#C9A227","#F0EEE6"]});
     flashScreen("rgba(168,224,99,.22)");
   }catch(e){}
+  try{ duelRefReact("cheer", winnerIdx, 4000); }catch(e){} /* v5.50: an mung nguoi thang */
   $("duelCtrls").classList.remove("hidden");
   renderDuel2();
 }
@@ -6029,6 +6042,78 @@ function duel2Exit(){
   state.screen = "menu"; state.mode = "classic";
   $("duelScreen").classList.add("hidden");
   $("menuScreen").classList.remove("hidden");
+}
+/* ==== v5.50: AI HOST - trong tai (character dang chon) dung giua vach chia, cam coi ==== */
+const duelRef = { mode:"idle", until:0, side:0 };
+function duelRefReact(mode, side, ms){
+  duelRef.mode = mode;
+  duelRef.side = side === undefined ? 0 : side;
+  duelRef.until = performance.now() + (ms || (mode === "card" ? 1300 : 950));
+  if(mode === "card"){ try{ sfx.refWhistle(); }catch(e){} }
+}
+let _drctx = null;
+function drawDuelRef(t){
+  const cv = $("duelRef"); if(!cv) return;
+  if(!_drctx){ try{ _drctx = cv.getContext("2d"); }catch(e){ return; } }
+  const g = _drctx; if(!g) return;
+  g.clearRect(0, 0, 120, 96);
+  const nowT = performance.now();
+  if(duelRef.until && nowT > duelRef.until){ duelRef.mode = "idle"; duelRef.until = 0; }
+  const bob = Math.sin(t/300) * 2;
+  let jump = 0, sq = 1;
+  if(duelRef.mode === "cheer") jump = Math.abs(Math.sin(t/90)) * 8;   /* nhay co vu */
+  if(duelRef.mode === "laugh") sq = 1 + Math.sin(t/70) * 0.08;        /* cuoi rung bung */
+  /* than trong tai = character nguoi choi dang dung */
+  g.save();
+  g.translate(60, 88 + bob - jump);
+  g.scale(1, sq);
+  g.imageSmoothingEnabled = false;
+  try{
+    const P = (typeof CHAR_POSE !== "undefined") && CHAR_POSE[character];
+    const im = (P && P.idle && P.idle.complete && P.idle.naturalWidth) ? (skinnedImg(character, "idle") || poseImg(character, "idle")) : null;
+    if(im){
+      const scl = 52 / im.naturalHeight;
+      g.drawImage(im, -im.naturalWidth*scl/2, -52, im.naturalWidth*scl, 52);
+    } else {
+      drawSprite(g, charGrid(), charPal(), -37, -50, 3.4, 3.4);
+    }
+  }catch(e){}
+  g.restore();
+  /* coi trong tai deo co */
+  g.save();
+  g.translate(60, 88 + bob - jump);
+  g.fillStyle = "#C9A227"; g.fillRect(8, -34, 10, 7);
+  g.fillStyle = "#8A8578"; g.beginPath(); g.arc(20, -30, 5, 0, Math.PI*2); g.fill();
+  g.strokeStyle = "#5C574A"; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(8, -34); g.quadraticCurveTo(0, -44, -2, -50); g.stroke();
+  g.restore();
+  /* phan ung */
+  g.textAlign = "center"; g.font = "16px sans-serif";
+  if(duelRef.mode === "cheer"){
+    /* chi tay + mui ten ve phia nguoi vua ghi diem (dp2 = tren, dp1 = duoi) */
+    const up = duelRef.side === 1;
+    const pulse = 0.7 + 0.3 * Math.abs(Math.sin(t/120));
+    g.save(); g.globalAlpha = pulse;
+    g.fillStyle = "#D97757";
+    g.beginPath();
+    if(up){ g.moveTo(60, 6); g.lineTo(50, 20); g.lineTo(70, 20); }
+    else { g.moveTo(60, 94); g.lineTo(50, 80); g.lineTo(70, 80); }
+    g.closePath(); g.fill();
+    g.restore();
+    g.fillText("📣", 94, 34);
+  } else if(duelRef.mode === "card"){
+    /* gio the vang + thoi coi */
+    const lift = Math.min(1, Math.max(0, (nowT - (duelRef.until - 1300)) / 180));
+    g.save();
+    g.translate(90, 44 - lift*20);
+    g.rotate(-0.15 + Math.sin(t/120)*0.07);
+    g.fillStyle = "#F2C230"; g.fillRect(-7, -12, 14, 22);
+    g.strokeStyle = "#B3573F"; g.lineWidth = 1; g.strokeRect(-7, -12, 14, 22);
+    g.restore();
+    g.fillText("😗", 28, 32);
+  } else if(duelRef.mode === "laugh"){
+    g.fillText("😆", 92, 34);
+  }
 }
 const DUEL_KB_ROWS = ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
 const DUEL_SKILLS = [["freeze","🧊","Đóng băng phím đối thủ 2s"],["shuffle","🔀","Đảo phím đối thủ 3s"],["ink","🖋️","Che từ đối thủ 4s"]];
