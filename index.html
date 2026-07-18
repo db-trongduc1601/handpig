@@ -1105,6 +1105,64 @@
   #panelArt .emo{font-size:60px; line-height:1.2;}
   #panelArt.lost img, #panelArt.lost .emo{filter:grayscale(1); opacity:.85;}
   #fx{position:fixed; inset:0; z-index:50; pointer-events:none; display:none;}
+  /* ==== v5.48: DUEL 2P SPLIT SCREEN ==== */
+  #duelScreen{display:flex; flex-direction:column; gap:8px; min-height:86vh; position:relative; animation:settleIn .4s var(--spring);}
+  #duelScreen.hidden{display:none;}
+  #duelExit{
+    position:absolute; top:2px; right:2px; z-index:5;
+    background:var(--card); border:1px solid var(--line); border-radius:8px;
+    width:34px; height:34px; cursor:pointer; color:var(--muted); font-size:15px;
+  }
+  #duelVs{
+    text-align:center; font-family:Georgia,serif; font-size:15px; letter-spacing:3px;
+    color:var(--accent); font-weight:bold;
+  }
+  .duelPane{
+    flex:1; background:var(--card); border:2px solid var(--line); border-radius:14px;
+    padding:10px 6px 12px; position:relative;
+    display:flex; flex-direction:column; align-items:center; gap:7px; min-height:38vh;
+  }
+  #dp2{border-color:var(--accent);}
+  /* dien thoai: nua tren LAT NGUOC 180° de 2 nguoi cam 2 dau may */
+  @media (max-width:820px){
+    #dp2{transform:rotate(180deg);}
+  }
+  /* PC: 2 nua dat canh nhau, khong lat */
+  @media (min-width:821px){
+    #duelScreen{flex-direction:row; align-items:stretch; min-height:60vh;}
+    #duelVs{align-self:center; writing-mode:vertical-rl; text-orientation:mixed;}
+    #duelCtrls{position:absolute; bottom:-54px; left:0; right:0;}
+  }
+  .dpName{font-family:"Courier New",monospace; font-size:11px; letter-spacing:2px; color:var(--muted); font-weight:bold;}
+  .dpHearts{font-size:14px; letter-spacing:3px; min-height:18px;}
+  .dpWord{display:flex; gap:5px; flex-wrap:wrap; justify-content:center; min-height:36px;}
+  .dpSlot{
+    width:22px; height:32px; border-bottom:3px solid var(--line);
+    font-family:"Courier New",monospace; font-weight:bold; font-size:21px; color:var(--ink);
+    display:flex; align-items:flex-start; justify-content:center;
+  }
+  .dpSlot.on{border-bottom-color:var(--good); animation:slotPop .3s var(--spring);}
+  .dpKb{display:flex; flex-direction:column; gap:4px; align-items:center;}
+  .dkRow{display:flex; gap:3px;}
+  .dpKey{
+    width:8.4vw; max-width:34px; height:36px; border-radius:6px; border:1px solid var(--line);
+    background:var(--bg); color:var(--ink); font-family:"Courier New",monospace;
+    font-weight:bold; font-size:14px; cursor:pointer; padding:0;
+  }
+  .dpKey.ok{background:var(--good); border-color:var(--good); color:#fff;}
+  .dpKey.no{background:var(--bad); border-color:var(--bad); color:#fff; opacity:.65; animation:keyNo .3s linear;}
+  .dpKey:disabled{cursor:default;}
+  .dpOver{
+    position:absolute; inset:0; z-index:3; border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    background:rgba(38,36,33,.85); font-family:Georgia,serif; font-size:27px; letter-spacing:2px;
+    animation:settleIn .35s var(--spring);
+  }
+  .dpOver.win{color:#A8E063; text-shadow:0 0 16px rgba(168,224,99,.6);}
+  .dpOver.lose{color:#FF8A6B;}
+  .dpOver small{font-family:"Courier New",monospace; font-size:13px; color:#D9D5C8; letter-spacing:1px;}
+  #duelCtrls{display:flex; justify-content:center; gap:8px;}
+  #duelCtrls.hidden{display:none;}
 </style>
 </head>
 <body>
@@ -1195,6 +1253,17 @@
       <button id="padJump" type="button"><b>&#9650;</b>JUMP</button>
     </div>
     <div id="runHint">SPACE / TAP &mdash; JUMP &nbsp;&middot;&nbsp; ESC &mdash; MENU</div>
+  </div>
+  <!-- v5.48: DUEL 2P - man hinh chia doi, lat nguoc tren dien thoai -->
+  <div id="duelScreen" class="hidden">
+    <button id="duelExit" title="ESC">&#10005;</button>
+    <div class="duelPane" id="dp2"></div>
+    <div id="duelVs">&#9876; VS &#9876;</div>
+    <div class="duelPane" id="dp1"></div>
+    <div id="duelCtrls" class="hidden">
+      <button class="pbtn primary" id="duelAgain">CHƠI LẠI</button>
+      <button class="pbtn ghost" id="duelMenu">MENU</button>
+    </div>
   </div>
   <div id="overlay" class="hidden">
     <div id="panel">
@@ -2639,9 +2708,10 @@ function curTrack(){
   if(state.screen === "menu") return {id:"menu", mel:MEL_MENU, bass:BASS_MENU, step:0.34, wave:"triangle"};
   if(state.screen === "game" && state.boss && !state.over) return {id:"boss", mel:MEL_BOSS, bass:BASS_BOSS, step: bossEnraged() ? 0.14 : 0.17, wave:"square"};
   if(state.screen === "game" && state.mode === "time") return {id:"time", mel:MEL, bass:BASS, step:0.19, wave:"square"};
-  /* v5.45: DUEL - track rieng nhip nhanh; bi don the bi (>=5 chu sai) -> pitch day cao + nhanh hon */
-  if(state.screen === "game" && state.mode === "duel" && !state.over){
-    const push = state.wrongSet && state.wrongSet.size >= 5;
+  /* v5.45+v5.48: DUEL 2P - track rieng nhip nhanh; ai bi don the bi (>=5 chu sai) -> pitch day cao */
+  if(state.screen === "duel2"){
+    const mw = (typeof duel2 !== "undefined" && duel2.p) ? Math.max(duel2.p[0].wrong.size, duel2.p[1].wrong.size) : 0;
+    const push = mw >= 5 && !duel2.over;
     return push
       ? {id:"duelHot", mel:MEL_DUEL, bass:BASS_DUEL, step:0.15, wave:"square", tp:2}
       : {id:"duel",    mel:MEL_DUEL, bass:BASS_DUEL, step:0.17, wave:"square"};
@@ -3596,6 +3666,8 @@ function loop(realT){
   } else if(state.screen === "runner"){
     updateRun();
     drawRunner(t);
+  } else if(state.screen === "duel2"){
+    /* v5.48: duel 2P thuan DOM - khong ve canvas */
   } else {
     if(seq.active) updateKick(t);
     if(winSeq.active) updateWinSeq(t);
@@ -5094,6 +5166,10 @@ document.addEventListener("keydown", e=>{
     if(K === "ENTER"){ duelBegin(); }
     return;
   }
+  if(state.screen === "duel2"){ /* v5.48 */
+    if(K === "ESCAPE") duel2Exit();
+    return;
+  }
   if(K === "M"){ toggleMute(); return; }
   if(K === "ESCAPE"){
     if(!$("wordsModal").classList.contains("hidden")){ closeWords(); return; }
@@ -5752,28 +5828,121 @@ function endTA(){
 }
 
 /* ---------------- DUEL ---------------- */
+/* ==== v5.48: DUEL 2P moi - 2 tu, man hinh chia doi lat nguoc ==== */
+let _duelW1 = null; /* tu nguoi choi 1 nhap (cho P2 doan) */
 function openDuel(){
   $("overlay").classList.add("hidden");
+  _duelW1 = null;
   $("duelInput").value = "";
   $("duelErr").textContent = "";
+  $("duelSub").textContent = "NGƯỜI CHƠI 1 — NHẬP TỪ BÍ MẬT (CHO P2 ĐOÁN)";
   $("duelModal").classList.remove("hidden");
   setTimeout(()=>{ try{ $("duelInput").focus(); }catch(e){} }, 60);
 }
 function duelBegin(){
   const w = ($("duelInput").value || "").toUpperCase().replace(/[^A-Z]/g, "");
   if(w.length < 3 || w.length > 14){
-    $("duelErr").textContent = "3-14 LETTERS · A-Z ONLY";
+    $("duelErr").textContent = "3-14 CHỮ · CHỈ A-Z";
     return;
   }
+  if(_duelW1 === null){ /* buoc 1 -> buoc 2 */
+    _duelW1 = w;
+    $("duelInput").value = "";
+    $("duelErr").textContent = "";
+    $("duelSub").textContent = "NGƯỜI CHƠI 2 — NHẬP TỪ BÍ MẬT (CHO P1 ĐOÁN)";
+    try{ sfx.click(); }catch(e){}
+    setTimeout(()=>{ try{ $("duelInput").focus(); }catch(e){} }, 60);
+    return;
+  }
+  const w1 = _duelW1; _duelW1 = null;
   $("duelModal").classList.add("hidden");
+  duelStart2(w1, w);
+}
+const duel2 = { active:false, over:false, p:null };
+function duelStart2(w1, w2){
+  state.screen = "duel2"; /* nhac duel + loop nhe */
   state.mode = "duel";
-  state.topic = "DUEL";
-  state.screen = "game";
+  duel2.active = true; duel2.over = false;
+  duel2.p = [
+    { word:w2, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"" }, /* P1 doan tu cua P2 */
+    { word:w1, rev:new Set(), wrong:new Set(), misses:0, maxM:6, res:"" }, /* P2 doan tu cua P1 */
+  ];
   $("menuScreen").classList.add("hidden");
-  $("gameScreen").classList.remove("hidden");
-  $("hudTopic").textContent = "DUEL";
-  $("timeHud").classList.add("hidden");
-  newRound(w);
+  $("gameScreen").classList.add("hidden");
+  $("duelScreen").classList.remove("hidden");
+  $("duelCtrls").classList.add("hidden");
+  ensureAudio(); try{ sfx.powerup(); }catch(e){}
+  try{ bossBanner("⚔ DUEL 2P ⚔"); }catch(e){}
+  renderDuel2();
+}
+function duel2Guess(pi, L){
+  if(!duel2.active || duel2.over) return;
+  const P = duel2.p[pi];
+  if(P.rev.has(L) || P.wrong.has(L)) return;
+  ensureAudio();
+  const pan = 0; /* 2 nguoi chung loa */
+  if(P.word.includes(L)){
+    P.rev.add(L);
+    try{ sfx.good(2, pan); }catch(e){}
+    if([...new Set(P.word.split(""))].every(ch => P.rev.has(ch))){ duel2End(pi); return; }
+  } else {
+    P.wrong.add(L); P.misses += 1;
+    try{ sfx.bad(pan); }catch(e){}
+    shake("sm");
+    if(P.misses >= P.maxM){ duel2End(pi === 0 ? 1 : 0); return; }
+  }
+  renderDuel2();
+}
+function duel2End(winnerIdx){
+  duel2.over = true; duel2.active = false;
+  duel2.p[winnerIdx].res = "win";
+  duel2.p[1 - winnerIdx].res = "lose";
+  try{ unlock("duel"); saveStats(); }catch(e){}
+  try{
+    sfx.win(); vib([60,40,60,40,140]);
+    burst(window.innerWidth/2, window.innerHeight/2, {count:22, spread:170, size:9, colors:["#A8E063","#C9A227","#F0EEE6"]});
+    flashScreen("rgba(168,224,99,.22)");
+  }catch(e){}
+  $("duelCtrls").classList.remove("hidden");
+  renderDuel2();
+}
+function duel2Exit(){
+  duel2.active = false; duel2.over = false; duel2.p = null;
+  state.screen = "menu"; state.mode = "classic";
+  $("duelScreen").classList.add("hidden");
+  $("menuScreen").classList.remove("hidden");
+}
+const DUEL_KB_ROWS = ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+function renderDuel2(){
+  if(!duel2.p) return;
+  for(let pi=0; pi<2; pi++){
+    const P = duel2.p[pi];
+    const pane = $("dp" + (pi + 1)); if(!pane) continue;
+    let h = '<div class="dpName">NGƯỜI CHƠI ' + (pi + 1) + '</div>';
+    h += '<div class="dpHearts">' + "❤".repeat(Math.max(0, P.maxM - P.misses)) + '<span style="opacity:.25">' + "❤".repeat(P.misses) + '</span></div>';
+    h += '<div class="dpWord">';
+    P.word.split("").forEach(ch=>{
+      const on = P.rev.has(ch);
+      h += '<div class="dpSlot' + (on ? " on" : "") + '">' + (on ? ch : "") + '</div>';
+    });
+    h += '</div><div class="dpKb">';
+    DUEL_KB_ROWS.forEach(row=>{
+      h += '<div class="dkRow">';
+      row.split("").forEach(L=>{
+        const ok = P.rev.has(L) && P.word.includes(L);
+        const no = P.wrong.has(L);
+        h += '<button class="dpKey' + (ok ? " ok" : "") + (no ? " no" : "") + '" data-l="' + L + '"' + ((ok || no || duel2.over) ? " disabled" : "") + '>' + L + '</button>';
+      });
+      h += '</div>';
+    });
+    h += '</div>';
+    if(P.res){
+      h += '<div class="dpOver ' + P.res + '">' +
+        (P.res === "win" ? "🏆 CHIẾN THẮNG!" : "💀 THUA CUỘC") +
+        '<small>TỪ LÀ: ' + P.word + '</small></div>';
+    }
+    pane.innerHTML = h;
+  }
 }
 
 /* ---------------- BADGES / SKINS MODALS ---------------- */
@@ -6456,7 +6625,17 @@ $("duelBtn").onclick = ()=>{ ensureAudio(); sfx.click(); openDuel(); };
 $("metaClose").onclick = ()=>{ sfx.click(); closeMeta(); };
 $("metaModal").addEventListener("click", (e)=>{ if(e.target === $("metaModal")) closeMeta(); });
 $("duelStart").onclick = duelBegin;
-$("duelCancel").onclick = ()=>{ $("duelModal").classList.add("hidden"); backToMenu(); };
+$("duelCancel").onclick = ()=>{ $("duelModal").classList.add("hidden"); _duelW1 = null; backToMenu(); };
+/* v5.48: duel 2P wiring */
+["dp1","dp2"].forEach((id, pi)=>{
+  $(id).addEventListener("click", e=>{
+    const k = e.target.closest(".dpKey");
+    if(k && k.dataset.l) duel2Guess(pi, k.dataset.l);
+  });
+});
+$("duelExit").onclick = ()=> duel2Exit();
+$("duelAgain").onclick = ()=>{ $("duelScreen").classList.add("hidden"); openDuel(); };
+$("duelMenu").onclick = ()=> duel2Exit();
 document.querySelectorAll(".modeChip").forEach(ch=>{
   ch.onclick = ()=>{
     ensureAudio(); sfx.click();
