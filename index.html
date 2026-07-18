@@ -113,7 +113,13 @@
   .topicCard small{display:block; margin-top:5px; font-size:11px; color:var(--muted); letter-spacing:2px;}
   .topicCard:hover{transform:translateY(-3px) scale(1.03); border-color:var(--accent); box-shadow:0 8px 16px rgba(217,119,87,.2);}
   .topicCard:active{transform:scale(1.05,.92);}
-  #bestLine{margin-top:22px; font-size:12px; letter-spacing:2px; color:var(--muted); font-family:"Courier New",monospace;}
+  /* v5.28 redesign: best stats = 3 chip, metaRow = grid deu */
+  #bestLine{margin-top:24px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap; font-family:"Courier New",monospace;}
+  .bestChip{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:8px 16px; font-size:10px; letter-spacing:2px; color:var(--muted);
+  }
+  .bestChip b{display:block; margin-top:3px; font-size:16px; letter-spacing:1px; color:var(--gold);}
   #menuFooter{margin-top:30px; font-size:12px; color:var(--muted); font-style:italic; font-family:Georgia,serif;}
 
   /* ---------- GAME ---------- */
@@ -178,13 +184,13 @@
     100%{transform:scale(1);}
   }
   #hintRow{text-align:center; margin:6px 0 12px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
-  #hintBtn, #viBtn, #revBtn{
+  #hintBtn, #viBtn, #revBtn, #peekBtn{
     background:var(--card); border:1px solid var(--line); border-radius:10px;
     font-family:"Courier New",monospace; font-size:13px; letter-spacing:1px;
     padding:9px 18px; cursor:pointer; color:var(--ink);
   }
-  #hintBtn:hover:not(:disabled), #viBtn:hover:not(:disabled), #revBtn:hover:not(:disabled){border-color:var(--accent); color:var(--accent);}
-  #hintBtn:disabled, #viBtn:disabled, #revBtn:disabled{opacity:.4; cursor:default;}
+  #hintBtn:hover:not(:disabled), #viBtn:hover:not(:disabled), #revBtn:hover:not(:disabled), #peekBtn:hover:not(:disabled){border-color:var(--accent); color:var(--accent);}
+  #hintBtn:disabled, #viBtn:disabled, #revBtn:disabled, #peekBtn:disabled{opacity:.4; cursor:default;}
   #viHintLine{
     text-align:center; margin:-4px 0 12px; font-family:"Courier New",monospace;
     font-size:14px; font-weight:bold; letter-spacing:1px; color:#7D9B6A;
@@ -199,10 +205,36 @@
     font-size:20px; font-weight:bold; cursor:pointer; transform-origin:50% 100%;
     transition:transform .15s var(--spring), background .1s, border-color .1s, filter .3s, opacity .3s;
   }
-  /* v5.27: boss keyboard gimmicks */
-  .key.venom{filter:blur(2.5px) saturate(.4); opacity:.5;}
-  #kb.hexed .key{animation:hexSpin .45s var(--spring);}
-  @keyframes hexSpin{0%{transform:rotateY(90deg); opacity:.3;}100%{transform:rotateY(0); opacity:1;}}
+  /* v5.27: boss keyboard gimmicks | v5.29: du 10 boss | v5.30: anim manh hon */
+  .key.venom{animation:venomPulse 1s ease-in-out infinite;}
+  @keyframes venomPulse{
+    0%,100%{filter:blur(2px) saturate(.4); opacity:.55;}
+    50%{filter:blur(3.6px) saturate(.3) hue-rotate(60deg); opacity:.38;}
+  }
+  #kb.hexed .key{animation:hexSpin .55s var(--spring);}
+  @keyframes hexSpin{0%{transform:rotateY(90deg) scale(1.35); opacity:.2;}60%{transform:rotateY(-18deg) scale(.92);}100%{transform:rotateY(0) scale(1); opacity:1;}}
+  #kb.tremor{animation:kbTremor .18s linear 6;}
+  @keyframes kbTremor{0%,100%{transform:translate(0,0) rotate(0);}25%{transform:translate(-6px,2px) rotate(-.6deg);}75%{transform:translate(6px,-2px) rotate(.6deg);}}
+  .key.stolen{animation:poofOut .3s forwards;}
+  @keyframes poofOut{0%{transform:scale(1) rotate(0); opacity:1; visibility:visible;}100%{transform:scale(.1) rotate(40deg); opacity:0; visibility:hidden;}}
+  .key.pawed{background:#6B4A2B; border-color:#8A5D36; color:rgba(255,255,255,.5); cursor:not-allowed; animation:pawSlam .35s var(--spring);}
+  @keyframes pawSlam{0%{transform:scale(1.7); box-shadow:0 8px 18px rgba(0,0,0,.4);}55%{transform:scale(.8);}100%{transform:scale(1);}}
+  .key.bitten{background:none; border-style:dashed; border-color:var(--bad); color:var(--bad); opacity:.55; cursor:not-allowed; animation:biteChomp .32s linear;}
+  @keyframes biteChomp{0%{transform:scale(1);}30%{transform:scale(.55) rotate(7deg);}60%{transform:scale(1.15) rotate(-5deg);}100%{transform:scale(1);}}
+  .key.burnt{background:#2A211C; border-color:#C05B41; color:#C05B41; cursor:not-allowed; animation:burnFlick .45s linear infinite;}
+  @keyframes burnFlick{
+    0%,100%{text-shadow:0 0 5px rgba(192,91,65,.8); box-shadow:inset 0 -6px 10px rgba(192,91,65,.35);}
+    50%{text-shadow:0 0 12px rgba(235,130,60,1); box-shadow:inset 0 -10px 14px rgba(217,119,87,.6);}
+  }
+  .key.glitch{background:#16232A; border-color:#5AB4DC; color:#5AB4DC; text-shadow:0 0 6px #5AB4DC; animation:glitchJit .16s steps(2) infinite;}
+  @keyframes glitchJit{
+    0%,100%{transform:translate(0,0);}
+    25%{transform:translate(-1.5px,1px) skewX(-4deg);}
+    50%{transform:translate(1.5px,-1px) skewX(5deg);}
+    75%{transform:translate(-1px,-1.5px);}
+  }
+  .key.blown{transition:transform .55s var(--spring), background .1s, border-color .1s, filter .3s, opacity .3s;}
+  .key.shakeNo{animation:keyNo .3s linear;}
   .key:hover:not(:disabled){transform:translateY(-2px); border-color:var(--accent);}
   .key:active:not(:disabled){transform:scale(1.12,.82);}
   .key:disabled{cursor:default;}
@@ -259,6 +291,29 @@
   @keyframes flashFade{from{opacity:.55;}to{opacity:0;}}
   .slot.gold{color:var(--gold); border-bottom-color:var(--gold); animation:goldPop .6s var(--spring);}
   @keyframes goldPop{0%{transform:scale(.6,.6);}45%{transform:scale(1.3,.75);}70%{transform:scale(.9,1.15);}100%{transform:scale(1);}}
+  /* ---- v5.32: word row juice ---- */
+  .slot.land{animation:slotLand .32s var(--spring);}
+  @keyframes slotLand{0%{transform:scale(1.4,.6);}55%{transform:scale(.85,1.18);}100%{transform:scale(1,1);}}
+  #wordRow.danger .slot{border-bottom-color:var(--bad); animation:dangerShake .7s linear infinite;}
+  @keyframes dangerShake{0%,100%{transform:translate(0,0);}20%{transform:translate(-1.5px,1px);}40%{transform:translate(1.5px,-1px);}60%{transform:translate(-1px,0);}80%{transform:translate(1px,1px);}}
+  body.fever .slot{color:var(--gold); animation:feverWave 1.1s ease-in-out infinite; animation-delay:calc(var(--si,0)*.09s); text-shadow:0 0 10px rgba(201,162,39,.7);}
+  @keyframes feverWave{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+  /* ---- v5.33: boss cinematic ---- */
+  #sceneWrap.finisher #scene{animation:finZoom .9s var(--spring); transform-origin:22% 78%;}
+  @keyframes finZoom{0%{transform:scale(1);}25%{transform:scale(1.18);}70%{transform:scale(1.18);}100%{transform:scale(1);}}
+  .bossBanner{
+    position:fixed; top:34%; left:50%; z-index:70; pointer-events:none;
+    font-family:Georgia,serif; font-size:44px; font-weight:bold; color:#F0EEE6;
+    text-shadow:0 4px 18px rgba(0,0,0,.6), 0 0 22px rgba(192,91,65,.8);
+    letter-spacing:6px; white-space:nowrap;
+    animation:bannerSweep 1.5s cubic-bezier(.2,.9,.3,1) forwards;
+  }
+  @keyframes bannerSweep{
+    0%{transform:translateX(60vw); opacity:0;}
+    18%{transform:translateX(-50%); opacity:1;}
+    78%{transform:translateX(-50%); opacity:1;}
+    100%{transform:translateX(-120vw); opacity:0;}
+  }
   .viewWords{
     display:inline-block; margin-top:10px; font-family:"Courier New",monospace; font-size:12px;
     letter-spacing:1px; color:var(--accent); cursor:pointer; font-weight:bold;
@@ -314,17 +369,26 @@
   }
   .modeChip:hover{border-color:var(--accent);}
   .modeChip.sel{background:var(--accent); border-color:var(--accent); color:#fff;}
-  #metaRow{display:flex; justify-content:center; gap:10px; margin-top:16px; flex-wrap:wrap;}
-  .metaBtn{
-    position:relative;
-    font-family:"Courier New",monospace; font-size:11px; letter-spacing:1px;
-    background:none; border:1px solid var(--line); border-radius:8px;
-    padding:8px 16px; cursor:pointer; color:var(--ink);
+  /* v5.28 redesign: nut dong deu, thong bao = cham vang nho ben trong (het vien vang + pulse loan) */
+  #metaRow{
+    display:grid; grid-template-columns:repeat(4, minmax(110px, 1fr)); gap:8px;
+    margin:14px auto 0; max-width:560px;
   }
-  .metaBtn:hover{border-color:var(--accent); color:var(--accent);}
-  .metaBtn.hot{border-color:var(--gold); color:var(--ink); animation:metaPulse 1.6s infinite;}
-  .metaBtn.hot::after{content:""; position:absolute; top:-4px; right:-4px; width:9px; height:9px; border-radius:50%; background:var(--gold); box-shadow:0 0 5px var(--gold);}
-  @keyframes metaPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,162,39,.45);}50%{box-shadow:0 0 0 4px rgba(201,162,39,0);}}
+  .metaBtn{
+    position:relative; overflow:hidden;
+    font-family:"Courier New",monospace; font-size:11px; letter-spacing:1.5px;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:11px 6px; cursor:pointer; color:var(--ink);
+    transition:transform .15s var(--spring), border-color .15s, color .15s;
+  }
+  .metaBtn:hover{transform:translateY(-2px); border-color:var(--accent); color:var(--accent);}
+  .metaBtn.hot::after{
+    content:""; position:absolute; top:6px; right:6px; width:7px; height:7px;
+    border-radius:50%; background:var(--gold); box-shadow:0 0 6px var(--gold);
+    animation:dotPulse 1.6s infinite;
+  }
+  @keyframes dotPulse{0%,100%{transform:scale(1); opacity:1;}50%{transform:scale(1.4); opacity:.7;}}
+  @media (max-width:640px){ #metaRow{grid-template-columns:repeat(2,1fr);} }
   #timeHud.hot b{color:var(--bad); animation:bump .3s var(--spring) infinite alternate;}
   .badgeToast{
     position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:80;
@@ -544,7 +608,7 @@
       <button class="metaBtn" id="statsBtn">STATS</button>
       <button class="metaBtn" id="settingsBtn">SETTINGS</button>
     </div>
-    <div id="menuFooter">6 misses and the pig loses its patience. &mdash; v5.27</div>
+    <div id="menuFooter">6 misses and the pig loses its patience. &mdash; v5.36</div>
   </div>
 
   <!-- GAME -->
@@ -580,7 +644,7 @@
       <span id="comboLbl">COMBO</span>
       <div id="comboBar"><div class="cseg"></div><div class="cseg"></div><div class="cseg"></div><div class="cseg"></div></div>
     </div>
-    <div id="hintRow"><button id="hintBtn">50/50 (15&cent;) &middot; H</button><button id="viBtn">G&#7906;I &Yacute; VN (100&cent;) &middot; 4</button></div>
+    <div id="hintRow"><button id="hintBtn">50/50 (15&cent;) &middot; H</button><button id="viBtn">G&#7906;I &Yacute; VN (100&cent;) &middot; 4</button><button id="peekBtn" title="xem danh sach tu cua topic">D&Ograve; T&#7914; &middot; 0</button></div>
     <div id="viHintLine" class="hidden"></div>
     <div id="kb"></div>
   </div>
@@ -1262,7 +1326,11 @@ function saveBest(){
   renderBest();
 }
 function renderBest(){
-  $("bestLine").textContent = "BEST SCORE: " + state.best.score + "   BEST STREAK: " + state.best.streak + "   COINS: " + (stats.coins||0) + "\u00A2";
+  /* v5.28 redesign: 3 chip thay vi 1 dong chu */
+  $("bestLine").innerHTML =
+    "<div class=\"bestChip\">BEST SCORE<b>" + state.best.score + "</b></div>" +
+    "<div class=\"bestChip\">BEST STREAK<b>" + state.best.streak + "</b></div>" +
+    "<div class=\"bestChip\">COINS<b>" + (stats.coins||0) + "\u00A2</b></div>";
 }
 function mult(){ return state.streak >= 6 ? 3 : state.streak >= 3 ? 2 : 1; }
 
@@ -1327,7 +1395,7 @@ function updateBossFx(){
     bossFx.anim = null;
     if(a.type === "up"){
       bossFx.hitT = performance.now();
-      try{ sfx.thud(); }catch(e){}
+      try{ sfx.thud(); if(Math.random() < 0.5) sfx.bossVoice(bossKind().id, 1.25); }catch(e){} /* v5.30: boss keu dau */
       if(!reduced()) cBurst(BOSS_X + 5*BOSS_S, BOSS_Y + 5*BOSS_S, {count:14, speed:2.8, up:1.2, size:4, colors:["#C05B41","#F0EEE6","#C9A227"]});
     } else {
       bossFx.pigHitT = performance.now();
@@ -1504,8 +1572,15 @@ function drawBossArena(t){
     bossFx.enragedShown = true;
     const ec = center($("sceneWrap"));
     floatText(ec.x, ec.y - 40, "ENRAGE!", "#C05B41", 26);
-    try{ sfx.v_roar(1.35, 1); }catch(e){}
+    try{ sfx.bossVoice(K.id, 1.3); }catch(e){} /* v5.30 */
     shake("md");
+    flashScreen("rgba(192,91,65,.25)");
+  }
+  if(rage){ /* v5.33 phase 2: nhuom mau arena theo boss */
+    sctx.save(); sctx.globalAlpha = 0.5;
+    sctx.fillStyle = (typeof KB_TINT !== "undefined" && KB_TINT[K.id]) || "rgba(192,91,65,.15)";
+    sctx.fillRect(0, 0, 640, 300);
+    sctx.restore();
   }
   const M = bossMotion(K, t, rage);
   let by = BOSS_Y - (K.fly ? 16 : 0) + M.dy;
@@ -1522,9 +1597,9 @@ function drawBossArena(t){
     try{ sfx.thud(); }catch(e){}
     shake("sm");
     if(!reduced()) cBurst(BOSS_X + 55, BOSS_Y + (K.hh||105) + 4, {count:10, speed:2.2, up:1, size:3, g:0.15, colors:["#8A8578","#5C574A"]});
+    try{ sfx.bossVoice(K.id, 1); }catch(e){} /* v5.30: gam chao san theo tung boss */
     if(K.id === "dragon"){ /* v5.23: rong phun lua chao san */
       fireBreath(BOSS_X + 4, BOSS_Y + (K.hh||105)*0.5, -1, 30);
-      try{ sfx.v_roar(1.4, 1); }catch(e){}
     }
   }
   /* LUNGE v5.22: boss lao ve phia pig khi nem bong */
@@ -1543,7 +1618,7 @@ function drawBossArena(t){
   /* be dung kieu pokemon (be KHONG lunge theo boss) */
   drawPlatform(BOSS_X + bw/2, BOSS_Y + bh + 6, bw * 0.58);
   drawPlatform(pig.x + PIG_W/2, GROUND + 7, 78);
-  if(introAge >= INTRO_MS) bossAmbient(K, t, bx, by, bw, bh);
+  if(introAge >= INTRO_MS){ bossAmbient(K, t, bx, by, bw, bh); if(rage) bossAmbient(K, t + 4200, bx, by, bw, bh); } /* v5.33: rage = particle x2 */
   if(spr){
     sctx.imageSmoothingEnabled = false;
     if(M.rot || M.sqx !== 1 || M.sqy !== 1){
@@ -1667,7 +1742,7 @@ function tone(type, f0, f1, t0, dur, vol, dest){
   o.connect(g); g.connect(dest || audio.sfxGain || audio.master);
   o.start(t0); o.stop(t0+dur+0.02);
 }
-function noise(t0, dur, vol, hp){
+function noise(t0, dur, vol, hp, dest){
   if(!audio.ctx) return;
   const ctx = audio.ctx;
   const n = Math.floor(ctx.sampleRate * dur);
@@ -1681,8 +1756,28 @@ function noise(t0, dur, vol, hp){
     const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
     src.connect(f); node = f;
   }
-  node.connect(g); g.connect(audio.sfxGain || audio.master);
+  node.connect(g); g.connect(dest || audio.sfxGain || audio.master); /* v5.36: dest tuy chon */
   src.start(t0);
+}
+/* v5.36: reverb ngan cho tieng boss (dry + wet convolver, cache 1 lan) */
+let _bossVerb = null;
+function bossVerbDest(){
+  try{
+    if(!audio.ctx || !audio.ctx.createConvolver) return null;
+    if(_bossVerb) return _bossVerb;
+    const ctx = audio.ctx;
+    const cv = ctx.createConvolver();
+    const len = Math.floor(ctx.sampleRate * 0.35);
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for(let ch=0; ch<2; ch++){ const d = buf.getChannelData(ch); for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.2); }
+    cv.buffer = buf;
+    const inG = ctx.createGain(); inG.gain.value = 1;
+    const wet = ctx.createGain(); wet.gain.value = 0.4;
+    inG.connect(audio.sfxGain || audio.master);      /* dry */
+    inG.connect(cv); cv.connect(wet); wet.connect(audio.sfxGain || audio.master); /* wet */
+    _bossVerb = inG;
+    return inG;
+  }catch(e){ return null; }
 }
 const now = () => audio.ctx ? audio.ctx.currentTime : 0;
 
@@ -1734,6 +1829,42 @@ const sfx = {
   v_baa(pm, n){ const base=320*(pm||1); const t=now(); for(let i=0;i<6;i++) tone("sawtooth",base*(1+(i%2?0.06:-0.06)),base,t+i*0.045,0.06,0.07); },
   v_woo(pm, n){ const base=300*(pm||1); const t=now(); tone("sine",base*0.7,base*1.5,t,0.35,0.06); tone("sine",base*1.5,base*0.9,t+0.2,0.3,0.04); },
   v_squeak(pm, n){ const base=760*(pm||1); const t=now(); tone("triangle",base,base*1.3,t,0.05,0.06); },
+  /* v5.32: tim dap khi con 1 mang */
+  heart(){ const t = now(); tone("sine",75,40,t,0.1,0.28); tone("sine",65,35,t+0.16,0.12,0.2); },
+  /* ---- v5.30: TIENG RIENG 10 BOSS ---- */
+  bossVoice(id, pm){
+    const m = pm || 1, t = now();
+    const D = bossVerbDest(); /* v5.36: reverb -> boss nghe "to con" hon */
+    switch(id){
+      case "wolf":  /* hu trang */ tone("sine",300*m,620*m,t,0.35,0.12,D); tone("sine",620*m,260*m,t+0.35,0.45,0.11,D); noise(t,0.25,0.03,500); break;
+      case "fox":   /* yip yip */ [0,0.12].forEach(o=>{ tone("sawtooth",780*m,1150*m,t+o,0.05,0.09,D); tone("sawtooth",1150*m,700*m,t+o+0.05,0.06,0.08,D); }); break;
+      case "bear":  /* gam gu tram */ tone("sawtooth",95*m,60*m,t,0.55,0.18,D); tone("sawtooth",130*m,80*m,t+0.08,0.4,0.1,D); noise(t,0.35,0.05,120); break;
+      case "eagle": /* ret chua */ tone("sawtooth",1500*m,950*m,t,0.22,0.1,D); tone("sawtooth",1800*m,1200*m,t+0.16,0.18,0.07,D); noise(t,0.2,0.04,2600); break;
+      case "snake": /* xi xi */ noise(t,0.5,0.1,3400); noise(t+0.4,0.35,0.07,3800); break;
+      case "shark": /* dop nuoc */ tone("sine",70*m,28*m,t,0.3,0.3,D); noise(t,0.12,0.2,900); tone("sine",50*m,90*m,t+0.2,0.3,0.08,D); break;
+      case "robot": /* beep boop + servo */ [880,440,660].forEach((f,i)=> tone("square",f*m,f*m,t+i*0.09,0.07,0.09,D)); tone("sawtooth",120*m,220*m,t,0.3,0.05,D); break;
+      case "witch": /* cuoi khanh khach */ [0,1,2,3,4].forEach(i=> tone("triangle",(900-i*110)*m,(860-i*110)*m,t+i*0.09,0.08,0.09,D)); break;
+      case "dragon": this.v_roar(1.5*m,1); noise(t+0.1,0.4,0.06,600); break;
+      case "boar":  /* grunt + giam chan */ this.v_oink(0.55*m,2); tone("sine",100,40,t+0.15,0.2,0.25,D); tone("sine",100,40,t+0.35,0.2,0.25,D); break;
+      default: this.v_roar(m,1);
+    }
+  },
+  bossSkill(id){
+    const t = now();
+    const V = 1 + (Math.random()*0.16 - 0.08); /* v5.36: pitch +-8% moi lan, tranh nham */
+    switch(id){
+      case "wolf":  this.bossVoice("wolf", V); break;
+      case "fox":   /* poof trom phim */ noise(t,0.15,0.12,1500); tone("triangle",900*V,1600*V,t,0.18,0.07); this.bossVoice("fox", V); break;
+      case "bear":  /* vuot de sam */ tone("sine",120*V,40*V,t,0.25,0.35); noise(t,0.12,0.15,250); break;
+      case "eagle": /* gio quat */ noise(t,0.5,0.16,700); noise(t+0.15,0.4,0.1,1100); break;
+      case "snake": noise(t,0.45,0.12,3400); break;
+      case "shark": /* chomp x2 */ [0,0.18].forEach(o=>{ tone("sine",80*V,30*V,t+o,0.15,0.3); noise(t+o,0.07,0.18,1200); }); break;
+      case "robot": /* nhieu glitch */ for(let i=0;i<5;i++) tone("square",300+Math.random()*900,200+Math.random()*700,t+i*0.05,0.04,0.07); noise(t,0.15,0.05,3000); break;
+      case "witch": /* phep bay len */ tone("sine",500*V,1500*V,t,0.3,0.08); tone("sine",750*V,1900*V,t+0.08,0.3,0.06); this.bossVoice("witch", V); break;
+      case "dragon": /* phun lua */ noise(t,0.5,0.14,500); tone("sawtooth",160*V,90*V,t,0.4,0.1); break;
+      case "boar":  /* huc */ tone("sine",110*V,35*V,t,0.3,0.4); noise(t,0.2,0.15,200); this.v_oink(0.5*V,1); break;
+    }
+  },
 };
 
 const MEL  = [76,0,79,0, 81,0,79,76, 74,0,76,0, 72,0,0,0,
@@ -1751,6 +1882,9 @@ function curTrack(){
   if(state.screen === "menu") return {mel:MEL_MENU, bass:BASS_MENU, step:0.34, wave:"triangle"};
   if(state.screen === "game" && state.boss && !state.over) return {mel:MEL_BOSS, bass:BASS_BOSS, step: bossEnraged() ? 0.14 : 0.17, wave:"square"};
   if(state.screen === "game" && state.mode === "time") return {mel:MEL, bass:BASS, step:0.19, wave:"square"};
+  /* v5.36: sap thua (con <=2 mang) -> ha 3 semitone + cham lai = nhac "lo lang" */
+  if(state.screen === "game" && !state.over && state.maxM > 2 && state.misses >= state.maxM - 2 && state.misses > 0)
+    return {mel:MEL, bass:BASS, step:0.28, wave:"square", tp:-3};
   return {mel:MEL, bass:BASS, step:0.25, wave:"square"};
 }
 const midi = m => 440 * Math.pow(2, (m-69)/12);
@@ -1765,8 +1899,14 @@ function startMusic(){
     while(audio.nextT < audio.ctx.currentTime + 0.15){
       const tr = curTrack();
       const s = audio.step % 32;
-      if(tr.mel[s])  tone(tr.wave, midi(tr.mel[s]),  midi(tr.mel[s]),  audio.nextT, tr.step*0.85, 0.035, audio.musicGain);
-      if(tr.bass[s]) tone("triangle", midi(tr.bass[s]), midi(tr.bass[s]), audio.nextT, tr.step*0.95, 0.05,  audio.musicGain);
+      const tp = tr.tp || 0; /* v5.36: transpose */
+      if(tr.mel[s])  tone(tr.wave, midi(tr.mel[s]+tp),  midi(tr.mel[s]+tp),  audio.nextT, tr.step*0.85, 0.035, audio.musicGain);
+      if(tr.bass[s]) tone("triangle", midi(tr.bass[s]+tp), midi(tr.bass[s]+tp), audio.nextT, tr.step*0.95, 0.05,  audio.musicGain);
+      /* v5.36: layer percussion khi streak >= 3 (hi-hat noise + kick) */
+      if(state.screen === "game" && !state.over && state.streak >= 3){
+        if(s % 2 === 0) noise(audio.nextT, 0.03, 0.02, 6000, audio.musicGain);
+        if(s % 8 === 0) tone("sine", 110, 55, audio.nextT, 0.09, 0.05, audio.musicGain);
+      }
       audio.nextT += tr.step;
       audio.step++;
     }
@@ -1827,6 +1967,17 @@ function center(el){
   return { x: r.left + r.width/2, y: r.top + r.height/2 };
 }
 
+/* v5.33: banner ten boss truot ngang kieu dau vo dai */
+function bossBanner(txt){
+  if(reduced()) return;
+  const b = document.createElement("div");
+  b.className = "bossBanner";
+  b.textContent = txt;
+  document.body.appendChild(b);
+  b.addEventListener("animationend", ()=> b.remove());
+  setTimeout(()=>{ if(b.parentNode) b.remove(); }, 2200);
+}
+
 /* flying letters: decoration layer, game state never waits for them */
 function flyLetter(L, fromEl, correct){
   if(reduced() || !fromEl) return;
@@ -1843,12 +1994,20 @@ function flyLetter(L, fromEl, correct){
       el.style.left = from.x + "px"; el.style.top = from.y + "px";
       document.body.appendChild(el);
       if(el.animate){
+        /* v5.32: bay theo cung bezier + dap xuong slot nay bounce */
+        const dx = to.x - from.x, dy = to.y - from.y;
+        const midX = dx*0.5, midY = dy*0.5 - 64;
+        const sl = slots[i];
         el.animate([
-          { transform:"translate(-50%,-50%) scale(1)", opacity:1 },
-          { transform:"translate(calc(-50% + " + (to.x-from.x) + "px), calc(-50% + " + (to.y-from.y) + "px)) scale(1.2)", opacity:0.9 },
-        ], { duration:260, easing:"cubic-bezier(0.22, 1, 0.36, 1)" }).onfinish = ()=> el.remove();
+          { transform:"translate(-50%,-50%) scale(1) rotate(0deg)", opacity:1 },
+          { transform:"translate(calc(-50% + " + midX + "px), calc(-50% + " + midY + "px)) scale(1.35) rotate(12deg)", opacity:1, offset:0.5 },
+          { transform:"translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px)) scale(1.15) rotate(0deg)", opacity:0.95 },
+        ], { duration:340, easing:"cubic-bezier(0.3, 0.7, 0.4, 1)" }).onfinish = ()=>{
+          el.remove();
+          if(sl){ sl.classList.remove("land"); void sl.offsetWidth; sl.classList.add("land"); setTimeout(()=>{ try{ sl.classList.remove("land"); }catch(e){} }, 400); }
+        };
       } else el.remove();
-      setTimeout(()=>{ if(el.parentNode) el.remove(); }, 600);
+      setTimeout(()=>{ if(el.parentNode) el.remove(); }, 700);
     });
   } else {
     const el = document.createElement("div");
@@ -2138,10 +2297,29 @@ function drawGallows(ctx, stage, t){
   }
 }
 
+/* v5.34: thoi tiet theo topic + dom dom ban dem (dung cparts co san) */
+function sceneWeather(){
+  if(reduced() || state.screen !== "game" || cparts.length > 220) return;
+  const tp = state.topic;
+  if(tp === "NATURE" && Math.random() < 0.3){        /* mua nhe */
+    cparts.push({x:Math.random()*640, y:-4, vx:-0.6, vy:4.2+Math.random()*1.5, life:1, decay:0.012, size:2, color:"rgba(120,160,200,.7)", g:0});
+  } else if(tp === "SCIENCE" && Math.random() < 0.05){ /* sao roi */
+    cparts.push({x:100+Math.random()*540, y:-4, vx:-1.8-Math.random(), vy:1.6+Math.random(), life:1, decay:0.01, size:2, color:"#E7C24A", g:0});
+  } else if(tp === "FOOD" && Math.random() < 0.1){     /* hoi khoi bay len */
+    cparts.push({x:60+Math.random()*520, y:300, vx:(Math.random()-0.5)*0.3, vy:-0.8-Math.random()*0.5, life:0.5, decay:0.006, size:3+Math.random()*2, color:"rgba(200,195,185,.35)", g:0});
+  } else if(tp === "GEOGRAPHY" && Math.random() < 0.02){ /* may troi */
+    cparts.push({x:-10, y:20+Math.random()*60, vx:0.5+Math.random()*0.4, vy:0, life:1, decay:0.004, size:6+Math.random()*4, color:"rgba(180,175,165,.25)", g:0});
+  }
+  const hh = new Date().getHours();
+  if((hh >= 19 || hh < 6) && Math.random() < 0.04){    /* dom dom */
+    cparts.push({x:Math.random()*640, y:120+Math.random()*150, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.4, life:1, decay:0.008, size:2, color:"#D9B84A", g:0});
+  }
+}
 function drawScene(t){
   sctx.clearRect(0,0,640,300);
   sctx.fillStyle = "#262421";
   sctx.fillRect(0,0,640,300);
+  sceneWeather(); /* v5.34 */
   drawFlies(t);
   sctx.strokeStyle = "#3A362F";
   sctx.lineWidth = 3;
@@ -2508,6 +2686,9 @@ function loop(realT){
        performance.now() - state.lastInput > 20000){
       if(!sleeping){ sleeping = true; sfx.snore(); }
     }
+    /* v5.32: tim dap 60bpm khi con 1 mang */
+    if(!state.over && !seq.active && !winSeq.active && state.misses === state.maxM - 1 &&
+       Math.floor(t/900) !== Math.floor((t-16)/900)){ try{ sfx.heart(); }catch(e){} }
     drawScene(t);
   }
   requestAnimationFrame(loop);
@@ -2592,54 +2773,137 @@ function buildKeyboard(order){
   });
 }
 
-/* ---- v5.27: BOSS KEYBOARD GIMMICKS (ran phun noc mo phim, phu thuy trao phim) ---- */
-const kbFx = { t:0, order:null };
-function snakeVenom(n){
+/* ---- v5.27: BOSS KEYBOARD GIMMICKS ----
+   v5.29: DU 10 BOSS co skill danh ban phim, do kho tang theo thu tu xuat hien:
+   1 SOI hu rung phim (hu doa)      2 CAO trom 1 phim (an hinh)
+   3 GAU de 2 phim (khoa)           4 DAI BANG thoi bay 3 phim (lech cho)
+   5 RAN noc mo 4 phim (blur)       6 CA MAP dop khoa 2 phim (lau hon, nhanh hon)
+   7 ROBOT hack 6 phim (che nhan)   8 PHU THUY trao 26 phim
+   9 RONG dot khoa 4 phim          10 VUA HEO RUNG huc: trao phim + khoa 3
+   Chu ky tan cong ngan dan: 11s (soi) -> 6s (heo rung). Moi lan doan sai cung bi danh. */
+const kbFx = { t:0, order:null, locked:new Set() };
+const KB_IV = { wolf:11000, fox:10000, bear:9500, eagle:9000, snake:8500, shark:8000, robot:7500, witch:7000, dragon:6500, boar:6000 };
+const KB_FX_CLS = ["venom","stolen","pawed","bitten","burnt","glitch"];
+function kbAvail(){
   const pool = [];
   for(let i=65; i<=90; i++){
     const L = String.fromCharCode(i);
-    if(!state.revealed.has(L) && !state.wrongSet.has(L) && !state.dimmed.has(L)) pool.push(L);
+    if(!state.revealed.has(L) && !state.wrongSet.has(L) && !state.dimmed.has(L) && !kbFx.locked.has(L)) pool.push(L);
   }
-  shuffle(pool).slice(0, n || 4).forEach(L=>{
+  return pool;
+}
+function kbShout(msg, col){
+  try{ const c = center($("kb")); floatText(c.x, c.y - 30, msg, col, 16); }catch(e){}
+}
+function kbPick(n){
+  const pool = kbAvail();
+  return shuffle(pool).slice(0, Math.min(n, Math.max(0, pool.length - 2))); /* luon chua >=2 phim tu do */
+}
+function kbTremor(){
+  const kb = $("kb");
+  kb.classList.remove("tremor"); void kb.offsetWidth; kb.classList.add("tremor");
+  setTimeout(()=>{ try{ $("kb").classList.remove("tremor"); }catch(e){} }, 1100);
+}
+function kbLock(n, ms, cls){
+  kbPick(n).forEach(L=>{
+    const k = $("key_" + L); if(!k) return;
+    kbFx.locked.add(L); k.classList.add(cls);
+    setTimeout(()=>{ try{ kbFx.locked.delete(L); const k2 = $("key_" + L); if(k2) k2.classList.remove(cls); if(state.word) renderKeys(); }catch(e){} }, ms);
+  });
+  renderKeys();
+}
+function kbSteal(n, ms){
+  kbPick(n).forEach(L=>{
+    const k = $("key_" + L); if(!k) return;
+    k.classList.add("stolen");
+    setTimeout(()=>{ try{ const k2 = $("key_" + L); if(k2) k2.classList.remove("stolen"); }catch(e){} }, ms);
+  });
+}
+function kbScatter(n, ms){
+  kbPick(n).forEach(L=>{
+    const k = $("key_" + L); if(!k) return;
+    k.classList.add("blown");
+    k.style.transform = "translate(" + Math.round((Math.random()-0.5)*44) + "px," + Math.round((Math.random()-0.5)*30) + "px) rotate(" + Math.round((Math.random()-0.5)*56) + "deg)"; /* v5.30: bay xa hon */
+    setTimeout(()=>{ try{ const k2 = $("key_" + L); if(k2){ k2.style.transform = ""; setTimeout(()=>{ try{ k2.classList.remove("blown"); }catch(e){} }, 500); } }catch(e){} }, ms);
+  });
+}
+const KB_GLYPHS = "#%&@?!01".split("");
+function kbGlitch(n, ms){
+  kbPick(n).forEach(L=>{
+    const k = $("key_" + L); if(!k) return;
+    k.classList.add("glitch");
+    k.textContent = KB_GLYPHS[Math.floor(Math.random()*KB_GLYPHS.length)];
+    setTimeout(()=>{ try{ const k2 = $("key_" + L); if(k2){ k2.classList.remove("glitch"); k2.textContent = L; } }catch(e){} }, ms);
+  });
+}
+function snakeVenom(n){
+  kbPick(n || 4).forEach(L=>{
     const k = $("key_" + L); if(!k) return;
     k.classList.add("venom");
-    setTimeout(()=>{ try{ k.classList.remove("venom"); }catch(e){} }, 2600);
+    setTimeout(()=>{ try{ const k2 = $("key_" + L); if(k2) k2.classList.remove("venom"); }catch(e){} }, 2600);
   });
-  try{ const c = center($("kb")); floatText(c.x, c.y - 30, "NỌC RẮN!", "#7D9B6A", 16); }catch(e){}
+  kbShout("NỌC RẮN!", "#7D9B6A");
 }
 function witchShuffle(){
   kbFx.order = shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""));
+  const saveLock = [];
+  document.querySelectorAll("#kb .key").forEach(k=>{ KB_FX_CLS.forEach(c=>{ if(k.classList.contains(c)) saveLock.push([k.id, c]); }); });
   buildKeyboard(kbFx.order);
+  saveLock.forEach(([id, c])=>{ const k = $(id); if(!k) return; k.classList.add(c); if(c === "glitch") k.textContent = KB_GLYPHS[Math.floor(Math.random()*KB_GLYPHS.length)]; });
   renderKeys();
   const kb = $("kb");
   kb.classList.remove("hexed"); void kb.offsetWidth; kb.classList.add("hexed");
-  try{ const c = center(kb); floatText(c.x, c.y - 30, "TRÁO PHÍM!", "#8E6AB3", 16); sfx.powerup(); }catch(e){}
+  kbShout("TRÁO PHÍM!", "#8E6AB3");
+  try{ sfx.powerup(); }catch(e){}
+}
+const KB_TINT = {
+  wolf:"rgba(138,133,120,.15)", fox:"rgba(192,91,65,.15)", bear:"rgba(107,74,43,.2)",
+  eagle:"rgba(90,180,220,.15)", snake:"rgba(125,155,106,.18)", shark:"rgba(192,57,43,.16)",
+  robot:"rgba(90,180,220,.18)", witch:"rgba(142,106,179,.2)", dragon:"rgba(217,119,87,.22)", boar:"rgba(179,87,63,.2)"
+};
+function kbFxApply(id, isMiss){
+  /* v5.30: moi skill = am thanh rieng + rung man + flash mau boss */
+  try{ sfx.bossSkill(id); }catch(e){}
+  try{ shake("sm"); if(KB_TINT[id]) flashScreen(KB_TINT[id]); }catch(e){}
+  switch(id){
+    case "wolf":  kbTremor(); kbShout("SÓI HÚ!", "#8A8578"); break;
+    case "fox":   kbSteal(1, 3500); kbShout("CÁO TRỘM PHÍM!", "#C05B41"); break;
+    case "bear":  kbLock(2, 3000, "pawed"); kbShout("GẤU ĐÈ PHÍM!", "#6B4A2B"); break;
+    case "eagle": kbScatter(3, 3000); kbShout("GIÓ CÁNH!", "#5AB4DC"); break;
+    case "snake": snakeVenom(isMiss ? 3 : 4); break;
+    case "shark": kbLock(2, 4000, "bitten"); kbShout("CÁ MẬP ĐỚP!", "#C0392B"); break;
+    case "robot": kbGlitch(6, 3000); kbShout("HACK BÀN PHÍM!", "#5AB4DC"); break;
+    case "witch": witchShuffle(); break;
+    case "dragon": kbLock(4, 3500, "burnt"); kbShout("LỬA KHÈ PHÍM!", "#C05B41"); break;
+    case "boar":  witchShuffle(); kbLock(3, 3000, "pawed"); kbShout("HEO RỪNG HÚC!", "#B3573F"); break;
+  }
 }
 function kbFxTick(){
   if(!state.boss || state.over || state.locked || state.screen !== "game"){ return; }
-  const id = bossKind().id;
-  if(id === "snake") snakeVenom(4);
-  else if(id === "witch") witchShuffle();
+  kbFxApply(bossKind().id, false);
 }
 function kbFxStart(){
   kbFxStop();
   if(!state.boss) return;
-  const id = bossKind().id;
-  if(id === "snake") kbFx.t = setInterval(kbFxTick, 7000);
-  else if(id === "witch") kbFx.t = setInterval(kbFxTick, 9000);
+  kbFx.t = setInterval(kbFxTick, KB_IV[bossKind().id] || 9000);
 }
 function kbFxStop(){
   if(kbFx.t){ clearInterval(kbFx.t); kbFx.t = 0; }
-  document.querySelectorAll("#kb .key.venom").forEach(k => k.classList.remove("venom"));
-  $("kb").classList.remove("hexed");
+  kbFx.locked.clear();
+  document.querySelectorAll("#kb .key").forEach(k=>{
+    KB_FX_CLS.forEach(c => k.classList.remove(c));
+    k.classList.remove("blown");
+    k.style.transform = "";
+    const L = k.id.slice(4);
+    if(k.textContent !== L) k.textContent = L; /* tra nhan that (robot hack) */
+  });
+  $("kb").classList.remove("hexed", "tremor");
   if(kbFx.order){ kbFx.order = null; buildKeyboard(); if(state.word) renderKeys(); }
 }
 function kbFxOnMiss(){
   /* doan sai trong boss round -> boss danh vao ban phim ngay */
   if(!state.boss || state.over) return;
-  const id = bossKind().id;
-  if(id === "snake") snakeVenom(3);
-  else if(id === "witch") witchShuffle();
+  kbFxApply(bossKind().id, true);
 }
 
 function startGame(topic, mode){
@@ -2677,7 +2941,7 @@ function newRound(forcedWord){
       bossFx.anim = null; bossFx.hitT = 0; bossFx.pigHitT = 0; bossFx.enragedShown = false;
       bossFx.introT = performance.now(); bossFx._introDone = false; /* v5.22 intro drop-in */
       bossFx.dieT = 0; bossFx._db1 = false; bossFx._db2 = false; bossFx._stomp = false;
-      setTimeout(()=>{ try{ sfx.v_roar(0.9, 1); }catch(e){} }, 350);
+      setTimeout(()=>{ try{ sfx.bossVoice(bossKind().id, 0.9); }catch(e){} }, 350); /* v5.30: tieng rieng tung boss */
     }
   }
   state.word = forcedWord || nextWord(state.topic);
@@ -2717,10 +2981,9 @@ function newRound(forcedWord){
   $("puRow").classList.toggle("hidden", state.mode === "daily");
   renderAll();
   if(state.boss){
-    const bc = center($("sceneWrap"));
-    floatText(bc.x, bc.y - 30, "BOSS: " + (bossKind().name || "?") + "!", "#C05B41", 26);
+    bossBanner("⚔ " + (bossKind().name || "?") + " ⚔"); /* v5.33: banner truot ngang */
     sfx.powerup();
-    kbFxStart(); /* v5.27: ran/phu thuy tan cong ban phim dinh ky */
+    kbFxStart(); /* v5.27+v5.29: boss tan cong ban phim dinh ky */
   }
   if(character === "dragon" && state.screen === "game"){ /* v5.23: char rong phun lua khai man */
     setTimeout(()=>{ try{ fireBreath(pig.x + PIG_W - 4, pig.y + PIG_H*0.4, 1, 22); dragonFireAnim(650); sfx.v_roar(1.2, 0.8); }catch(e){} }, 250);
@@ -2758,14 +3021,16 @@ const shownLetters = new Set(); // pop animation only for newly revealed letters
 function renderWord(){
   const row = $("wordRow");
   row.innerHTML = "";
-  state.word.split("").forEach(ch=>{
+  state.word.split("").forEach((ch, i)=>{
     const d = document.createElement("div");
     const isRev = state.revealed.has(ch);
     d.className = "slot" + (isRev && !shownLetters.has(ch) ? " rev" : "");
     d.textContent = isRev ? ch : "";
+    d.style.setProperty("--si", i); /* v5.32: delay song fever */
     row.appendChild(d);
   });
   state.revealed.forEach(ch => shownLetters.add(ch));
+  row.classList.toggle("danger", !state.over && !state.locked && state.misses === state.maxM - 1); /* v5.32 */
 }
 function renderHud(){
   $("hudScore").textContent = state.score;
@@ -2785,7 +3050,7 @@ function renderKeys(){
     if(isNo !== wasNo) k.classList.toggle("no", isNo);
     const isDim = state.dimmed.has(L);
     k.classList.toggle("dim", isDim);
-    k.disabled = state.over || state.locked || isOk || state.revealed.has(L) || isNo || isDim;
+    k.disabled = state.over || state.locked || isOk || state.revealed.has(L) || isNo || isDim || kbFx.locked.has(L); /* v5.29: boss khoa phim */
   }
 }
 function renderHint(){
@@ -2795,6 +3060,9 @@ function renderHint(){
   const v = $("viBtn");
   v.disabled = state.over || state.locked || state.viUsed || !VI_HINTS[state.word] || state.mode === "daily" || stats.coins < VI_COST;
   v.textContent = state.viUsed ? "GỢI Ý VN · USED" : "GỢI Ý VN (" + VI_COST + "\u00A2) · 4";
+  /* v5.28: do tu - mien phi, tat o daily (chong gian lan) va duel (tu tu nhap) */
+  const pk2 = $("peekBtn");
+  if(pk2) pk2.disabled = state.mode === "daily" || state.mode === "duel" || !TOPICS[state.topic];
 }
 function renderPU(){
   const defs = [
@@ -2862,7 +3130,12 @@ function handleWin(){
     if(BOSS_KINDS.every(k => stats.bossKinds[k.id])) unlock("slayer");
     const bcv = center($("sceneWrap"));
     floatText(bcv.x, bcv.y - 80, "BOSS DOWN! ×" + bwm, "#C9A227", 24);
+    /* v5.33: FINISHER - slow-mo + zoom vao arena */
+    hitstop(350);
+    flashScreen("rgba(240,238,230,.35)");
+    try{ const swp = $("sceneWrap"); swp.classList.remove("finisher"); void swp.offsetWidth; swp.classList.add("finisher"); setTimeout(()=>{ try{ swp.classList.remove("finisher"); }catch(e){} }, 950); }catch(e){}
     /* v5.22: anim boss chet (xoay + roi + fade) */
+    try{ sfx.bossVoice(bossKind().id, 0.6); }catch(e){} /* v5.30: tieng keu hap hoi (pitch thap) */
     bossFx.dieT = performance.now(); bossFx.dieKind = bossKind().id; bossFx.dieH = bossKind().hh || 105;
     bossFx._db1 = false; bossFx._db2 = false;
     if(!reduced()) cBurst(BOSS_X + 5*BOSS_S, BOSS_Y + 5*BOSS_S, {count:30, speed:3.6, up:2.2, size:5, colors:["#C05B41","#C9A227","#F0EEE6"]});
@@ -2907,6 +3180,7 @@ function handleWin(){
 function guess(L){
   if(state.locked || state.over || state.screen !== "game") return;
   if(state.revealed.has(L) || state.wrongSet.has(L) || state.dimmed.has(L)) return;
+  if(kbFx.locked.has(L)){ const k0 = $("key_" + L); if(k0){ k0.classList.remove("shakeNo"); void k0.offsetWidth; k0.classList.add("shakeNo"); } return; } /* v5.29: phim dang bi boss khoa (chan ca phim vat ly) */
   ensureAudio();
   wake();
   const keyEl = $("key_" + L);
@@ -3260,6 +3534,7 @@ document.addEventListener("keydown", e=>{
   if(K === "2"){ buyPU("vowels"); return; }
   if(K === "3"){ buyPU("wall"); return; }
   if(K === "4"){ useViHint(); return; }
+  if(K === "0"){ if(!$("peekBtn").disabled){ ensureAudio(); sfx.click(); showWords(state.topic, true); } return; } /* v5.28: do tu */
   if(K.length === 1 && K >= "A" && K <= "Z"){ guess(K); }
 });
 document.addEventListener("pointerdown", ()=>{ ensureAudio(); if(state.screen==="game") wake(); });
@@ -3268,6 +3543,7 @@ $("backBtn").onclick = ()=>{ if(!(seq.active && !seq.done) && !(winSeq.active &&
 $("muteBtn").onclick = toggleMute;
 $("hintBtn").onclick = useHint;
 $("viBtn").onclick = useViHint;
+$("peekBtn").onclick = ()=>{ ensureAudio(); sfx.click(); showWords(state.topic, true); }; /* v5.28: do tu trong game */
 $("puFreeze").onclick = ()=> buyPU("freeze");
 $("puVowels").onclick = ()=> buyPU("vowels");
 $("puWall").onclick = ()=> buyPU("wall");
@@ -3284,8 +3560,9 @@ function flashScreen(color){
 }
 
 /* ---------------- WORD LIST PREVIEW ---------------- */
-function showWords(topic){
-  delete state.pools[topic]; /* peeking reshuffles the deck */
+function showWords(topic, keepPool){
+  /* v5.28: keepPool = do tu trong game, khong xao lai bo bai */
+  if(!keepPool) delete state.pools[topic]; /* peeking from menu reshuffles the deck */
   $("wordsTitle").innerHTML = "WORDS &middot; <span>" + topic + "</span>";
   const gd = $("wordsGrid");
   gd.innerHTML = "";
@@ -3308,6 +3585,7 @@ const run = {
   obs:[], clouds:[], nextIn:140, milestone:0,
   coins:[], got:0, nextCoinIn:420,
   pups:[], nextPupIn:900, shield:0, magUntil:0, dblUntil:0, _djUsed:false, _invUntil:0,
+  fx:[], _msT:0, _dieT:0, _msBurst:false, /* v5.35 */
 };
 const RUNPERK = {
   pig:{}, chicken:{jump:1.08}, duck:{jump:1.14}, parrot:{coinBonus:1},
@@ -3328,6 +3606,7 @@ function startRunner(){
 function resetRun(){
   run.active = true; run.over = false; run.started = false;
   run.y = 0; run.vy = 0; run.dist = 0; run.score = 0; run.speed = 3.4; run.duck = false; run._jHold = false; run._fast = false; run._lt = 0; run._fr = 1; run._ceil = false;
+  run.fx = []; run._msT = 0; run._dieT = 0; run._msBurst = false; /* v5.35 */
   run.obs = []; run.nextIn = 140; run.milestone = 0;
   run.coins = []; run.got = 0; run.nextCoinIn = 420;
   run.pups = []; run.nextPupIn = 900; run.magUntil = 0; run.dblUntil = 0; run._djUsed = false; run._invUntil = 0;
@@ -3364,6 +3643,13 @@ function runHit(){
   run.duck = false; run._jHold = false;
   sfx.thud(); sfx.bad();
   shake("md");
+  /* v5.35: no vong xoay + flash do khi chet */
+  run._dieT = performance.now();
+  run.fx = run.fx || [];
+  for(let i=0;i<18;i++){
+    const a = Math.PI*2*i/18;
+    run.fx.push({x:RUN.pigX+40, y:RUN.groundY+run.y-28, vx:Math.cos(a)*(2+Math.random()*2.2), vy:Math.sin(a)*(2+Math.random()*2.2)-1, life:1, decay:0.025, size:3+Math.random()*3, color: i%3 ? "#C05B41" : "#8A8578"});
+  }
   if(run.score > run.hi){
     run.hi = run.score;
     try{ localStorage.setItem("hangpig_run_hi", String(run.hi)); }catch(e){}
@@ -3419,7 +3705,7 @@ function updateRun(){
   if(sc !== run.score){
     run.score = sc;
     $("runScore").textContent = String(sc).padStart(5,"0");
-    if(sc > 0 && sc % 100 === 0 && sc !== run.milestone){ run.milestone = sc; sfx.good(4); }
+    if(sc > 0 && sc % 100 === 0 && sc !== run.milestone){ run.milestone = sc; sfx.good(4); run._msT = _now; run._msBurst = false; } /* v5.35: flash */
   }
   run.nextIn -= run.speed * fr;
   if(run.nextIn <= 0){
@@ -3551,6 +3837,44 @@ function drawRunner(t){
     g.fillRect(c.x + 3, c.y + bobc + 3, 6, 6);
   }
   for(const pu of run.pups){ drawPup(g, pu.type, pu.x, pu.y + Math.sin(t/200 + pu.x/40)*3); }
+  /* ---- v5.35: RUNNER FX ---- */
+  if(!run.fx) run.fx = [];
+  /* tia hut coin khi magnet */
+  if(performance.now() < run.magUntil && !run.over){
+    g.strokeStyle = "rgba(217,88,75,.28)"; g.lineWidth = 1;
+    for(const c of run.coins){
+      const mdx = (RUN.pigX+40) - c.x, mdy = (gy + run.y - 28) - c.y;
+      if(Math.hypot(mdx,mdy) < 260){ g.beginPath(); g.moveTo(c.x+6, c.y+6); g.lineTo(RUN.pigX+40, gy+run.y-28); g.stroke(); }
+    }
+  }
+  /* bui chan theo toc do */
+  const gallopPre = (run.started && !run.over && run.y === 0 && !run.duck);
+  if(gallopPre && !reduced() && Math.random() < Math.min(0.5, run.speed/14)){
+    run.fx.push({x:RUN.pigX + 6 + Math.random()*12, y:gy - 3, vx:-run.speed*0.5, vy:-0.3-Math.random()*0.6, life:0.7, decay:0.045, size:2+Math.random()*2, color: night ? "#5C574A" : "#C9C4B6"});
+  }
+  /* milestone 100: chop vang + confetti */
+  const msAge = performance.now() - (run._msT || 0);
+  if(run._msT && msAge < 280){
+    g.fillStyle = "rgba(201,162,39," + (0.18*(1-msAge/280)).toFixed(3) + ")";
+    g.fillRect(0,0,RUN.W,RUN.H);
+    if(!run._msBurst){
+      run._msBurst = true;
+      for(let i=0;i<12;i++) run.fx.push({x:RUN.pigX+40, y:gy-70, vx:(Math.random()-0.5)*4, vy:-2-Math.random()*2, life:1, decay:0.03, size:3, color: i%2 ? "#C9A227" : "#E7C24A"});
+    }
+  }
+  /* chet: flash do */
+  const dieAge = performance.now() - (run._dieT || 0);
+  if(run._dieT && dieAge < 250){
+    g.fillStyle = "rgba(192,91,65," + (0.25*(1-dieAge/250)).toFixed(3) + ")";
+    g.fillRect(0,0,RUN.W,RUN.H);
+  }
+  /* update + ve particle (chay ca khi over de no het) */
+  for(const p of run.fx){
+    p.x += p.vx * (run._fr||1); p.y += p.vy * (run._fr||1); p.life -= p.decay * (run._fr||1);
+    if(p.life > 0){ g.globalAlpha = Math.min(1, p.life); g.fillStyle = p.color; g.fillRect(p.x, p.y, p.size, p.size); }
+  }
+  g.globalAlpha = 1;
+  run.fx = run.fx.filter(p => p.life > 0);
   /* v5.24 fix: bo tia lua random (nhap nhay) - frame FLY da co lua san */
   /* pig: duck squash, jump stretch, galloping feet */
   let sx = RUN.pigS, sy = RUN.pigS;
@@ -3582,31 +3906,35 @@ function drawRunner(t){
     const _im2 = DRAGON_FLY[_fi];
     if(_im2 && _im2.complete && _im2.naturalWidth) _flyIm = _im2;
   }
-  if(_flyIm){
-    /* fix nhap nhay: scale CO DINH theo RUN.pigS, khong an theo sx/sy squash-stretch
-       (vy dao dong quanh nguong +-3 khi flap -> size giat lien tuc) */
-    const _fscl = (15*RUN.pigS)/48; /* than rong ~48px tren cung frame 72px */
-    const _fw = _flyIm.naturalWidth*_fscl, _fh = _flyIm.naturalHeight*_fscl;
-    g.save(); g.imageSmoothingEnabled = false;
-    /* v5.25: kep y ve >= -4 de sprite khong bi cat khoi mep tren canvas tai tran */
-    g.drawImage(_flyIm, Math.round(RUN.pigX + 11*RUN.pigS - _fw/2), Math.max(-4, Math.round(gy + run.y - 48*_fscl - 6)), _fw, _fh);
+  /* v5.35: gom ve char vao 1 ham -> afterimage khi speed > 7 */
+  const drawChar = (xoff, amul)=>{
+    g.save(); g.globalAlpha = amul;
+    if(_flyIm){
+      /* fix nhap nhay: scale CO DINH theo RUN.pigS, khong an theo sx/sy squash-stretch
+         (vy dao dong quanh nguong +-3 khi flap -> size giat lien tuc) */
+      const _fscl = (15*RUN.pigS)/48; /* than rong ~48px tren cung frame 72px */
+      const _fw = _flyIm.naturalWidth*_fscl, _fh = _flyIm.naturalHeight*_fscl;
+      g.imageSmoothingEnabled = false;
+      /* v5.25: kep y ve >= -4 de sprite khong bi cat khoi mep tren canvas tai tran */
+      g.drawImage(_flyIm, Math.round(RUN.pigX + xoff + 11*RUN.pigS - _fw/2), Math.max(-4, Math.round(gy + run.y - 48*_fscl - 6)), _fw, _fh);
+    } else if(_rP && _rP.idle && _rP.idle.complete && _rP.idle.naturalWidth){
+      const _rpose = run.over ? "sad" : "idle";
+      const _rim = poseImg(character, _rpose);
+      const _rsrc = skinnedImg(character, _rpose) || _rim;
+      const _rscl = (15*sy)/_rP.idle.naturalHeight;
+      const _riw = _rim.naturalWidth*_rscl, _rih = _rim.naturalHeight*_rscl;
+      const _rbob = (gallop && run.y === 0) ? Math.abs(Math.sin(t/90))*3 : 0;
+      g.imageSmoothingEnabled = false; if(_rcd.alpha != null) g.globalAlpha = _rcd.alpha * amul;
+      g.drawImage(_rsrc, RUN.pigX + xoff + 11*sx - _riw/2, gy + run.y - _rih - _rbob, _riw, _rih);
+    } else {
+      if(_rcd.alpha != null) g.globalAlpha = _rcd.alpha * amul;
+      drawSprite(g, charGrid(), charPal(), RUN.pigX + xoff, gy - 14*sy + run.y, sx, sy, runMod);
+    }
+    if(character === "pig") drawSkinExtras(g, RUN.pigX + xoff, gy - 14*sy + run.y, sx, sy);
     g.restore();
-  } else if(_rP && _rP.idle && _rP.idle.complete && _rP.idle.naturalWidth){
-    const _rpose = run.over ? "sad" : "idle";
-    const _rim = poseImg(character, _rpose);
-    const _rsrc = skinnedImg(character, _rpose) || _rim;
-    const _rscl = (15*sy)/_rP.idle.naturalHeight;
-    const _riw = _rim.naturalWidth*_rscl, _rih = _rim.naturalHeight*_rscl;
-    const _rbob = (gallop && run.y === 0) ? Math.abs(Math.sin(t/90))*3 : 0;
-    g.save(); g.imageSmoothingEnabled = false; if(_rcd.alpha!=null) g.globalAlpha = _rcd.alpha;
-    g.drawImage(_rsrc, RUN.pigX + 11*sx - _riw/2, gy + run.y - _rih - _rbob, _riw, _rih);
-    g.restore();
-  } else {
-    if(_rcd.alpha != null){ g.save(); g.globalAlpha = _rcd.alpha; }
-    drawSprite(g, charGrid(), charPal(), RUN.pigX, gy - 14*sy + run.y, sx, sy, runMod);
-    if(_rcd.alpha != null){ g.restore(); }
-  }
-  if(character === "pig") drawSkinExtras(g, RUN.pigX, gy - 14*sy + run.y, sx, sy);
+  };
+  if(run.speed > 7 && run.started && !run.over && !reduced()){ drawChar(-14, 0.12); drawChar(-26, 0.05); } /* afterimage toc do cao */
+  drawChar(0, 1);
   if(run.shield > 0 && !run.over){
     g.strokeStyle = "rgba(90,180,220,.9)"; g.lineWidth = 2.5;
     g.beginPath(); g.arc(RUN.pigX + 44, gy + run.y - 26, 36, 0, Math.PI*2); g.stroke();
@@ -4419,7 +4747,7 @@ try{ updateMetaBadges(); }catch(e){}
 $("revealSpeak").onclick = (e)=>{ e.stopPropagation(); ensureAudio(); speakWord(state.word); };
 
 /* debug/test hook */
-window.__hp = { state, guess, useHint, buyPU, newRound, seq, winSeq, pigFx, run, updateRun, startRunner, exitRunner, runJump, resetRun, showWords, closeWords, ta, stats, settings, unlock, openDuel, duelBegin, showBadges, showSkins, showStats, showSettings, closeMeta, endTA, startDaily, dailyWord, dailyIndex, shareTextLive, copyShare, addCoins, hintCost, DIFFS, setDiff:(d)=>{ menuDiff = d; }, get menuDiff(){ return menuDiff; }, get badges(){ return ownedBadges; }, get skin(){ return skin; }, get sleeping(){ return sleeping; }, get ownedSkins(){ return ownedSkins; }, SKINS, get character(){ return character; }, setChar:(c)=>{ character = c; }, get ownedChars(){ return ownedChars; }, CHARS, CHAR_LIST, showCharShop, checkCharUnlocks, CHAR_POSE, poseImg, charPose, RUNPERK, runPerk, CHAR_SKIN_DEFS, skinnedImg, get charSkinSel(){return charSkinSel;}, get ownedCharSkins(){return ownedCharSkins;}, ACHS, achLevel, achReady, achAnyReady, claimAch, showAch, updateMetaBadges, get achClaimed(){return achClaimed;}, letterPts, wordBonus, hslRecolor, SKIN_CACHE, startGame, TOPICS, stageFor, achReward, PU_COST, spawnObs, runHit, fever, feverOn, feverStart, feverEnd, FEVER_MS, bossFx, bossHP, bossMaxHP, bossThrow, updateBossFx, curTrack, pig, BOSS_PIG_X, bossBallRest, bumpStreak, streakRewards, loadStreak, streakAlive, weekKey, dstr, STREAK_MS, saveDailyResult, renderDailyBtn, CHECKIN_GIFTS, loadCheckin, checkinDoneToday, nextCheckinDay, doCheckin, QUEST_DEFS, loadQuests, questEvent, questReady, claimQuest, showToday, BOSS_KINDS, bossKind, bossEnraged, BOSS_IMG, bossSprite, BOSS_SPRITE_CACHE, bossMotion, bossAmbient, drawBossDeath, pigReact, fireBreath, DRAGON_FIRE, DRAGON_FLY, dragonFx, dragonFireAnim, dragonFireFrame, fetchIPA, speakWord, ttsSpeak, get IPA_DB(){ return IPA_DB; }, kbFx, kbFxStart, kbFxStop, kbFxOnMiss, kbFxTick, snakeVenom, witchShuffle, buildKeyboard };
+window.__hp = { state, guess, useHint, buyPU, newRound, seq, winSeq, pigFx, run, updateRun, startRunner, exitRunner, runJump, resetRun, showWords, closeWords, ta, stats, settings, unlock, openDuel, duelBegin, showBadges, showSkins, showStats, showSettings, closeMeta, endTA, startDaily, dailyWord, dailyIndex, shareTextLive, copyShare, addCoins, hintCost, DIFFS, setDiff:(d)=>{ menuDiff = d; }, get menuDiff(){ return menuDiff; }, get badges(){ return ownedBadges; }, get skin(){ return skin; }, get sleeping(){ return sleeping; }, get ownedSkins(){ return ownedSkins; }, SKINS, get character(){ return character; }, setChar:(c)=>{ character = c; }, get ownedChars(){ return ownedChars; }, CHARS, CHAR_LIST, showCharShop, checkCharUnlocks, CHAR_POSE, poseImg, charPose, RUNPERK, runPerk, CHAR_SKIN_DEFS, skinnedImg, get charSkinSel(){return charSkinSel;}, get ownedCharSkins(){return ownedCharSkins;}, ACHS, achLevel, achReady, achAnyReady, claimAch, showAch, updateMetaBadges, get achClaimed(){return achClaimed;}, letterPts, wordBonus, hslRecolor, SKIN_CACHE, startGame, TOPICS, stageFor, achReward, PU_COST, spawnObs, runHit, fever, feverOn, feverStart, feverEnd, FEVER_MS, bossFx, bossHP, bossMaxHP, bossThrow, updateBossFx, curTrack, pig, BOSS_PIG_X, bossBallRest, bumpStreak, streakRewards, loadStreak, streakAlive, weekKey, dstr, STREAK_MS, saveDailyResult, renderDailyBtn, CHECKIN_GIFTS, loadCheckin, checkinDoneToday, nextCheckinDay, doCheckin, QUEST_DEFS, loadQuests, questEvent, questReady, claimQuest, showToday, BOSS_KINDS, bossKind, bossEnraged, BOSS_IMG, bossSprite, BOSS_SPRITE_CACHE, bossMotion, bossAmbient, drawBossDeath, pigReact, fireBreath, DRAGON_FIRE, DRAGON_FLY, dragonFx, dragonFireAnim, dragonFireFrame, fetchIPA, speakWord, ttsSpeak, get IPA_DB(){ return IPA_DB; }, kbFx, kbFxStart, kbFxStop, kbFxOnMiss, kbFxTick, snakeVenom, witchShuffle, buildKeyboard, kbFxApply, KB_IV, kbLock, kbSteal, kbScatter, kbGlitch, kbAvail };
 </script>
 <script>
 if("serviceWorker" in navigator && location.protocol === "https:"){
